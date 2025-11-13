@@ -47,14 +47,10 @@ bun run dev
 Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
 The API is running at [http://localhost:3000](http://localhost:3000).
 
-
-
-
-
-
-
-## Deployment (Cloudflare Wrangler)
-- Web deploy: cd apps/web && bun run deploy
+## Deployment
+- Build all apps: `bun run build`.
+- Web-only build: `cd apps/web && bun run build` (outputs static assets in `apps/web/dist` for any static host or CDN).
+- Server-only build: `cd apps/server && bun run build` to emit compiled server output.
 
 
 ## Project Structure

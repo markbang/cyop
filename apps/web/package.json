@@ -9,7 +9,6 @@
     "serve": "vite preview",
     "start": "vite",
     "check-types": "tsc --noEmit",
-    "wrangler:dev": "wrangler dev --port=3001",
     "deploy": "bun run build"
   },
   "dependencies": {
@@ -48,7 +47,6 @@
     "tailwindcss": "catalog:",
     "vite": "^6.2.2",
     "@tanstack/react-query-devtools": "^5.85.5",
-    "@cyop/config": "workspace:*",
-    "@cloudflare/vite-plugin": "^1.13.8"
+    "@cyop/config": "workspace:*"
   }
 }

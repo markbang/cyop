@@ -25,6 +25,6 @@
   "packageManager": "bun",
   "dbSetup": "neon",
   "api": "trpc",
-  "webDeploy": "wrangler",
+  "webDeploy": "none",
   "serverDeploy": "none"
 }
