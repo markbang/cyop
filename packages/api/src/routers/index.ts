@@ -1,5 +1,9 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { todoRouter } from "./todo";
+import { requirementsRouter } from "./requirements";
+import { datasetsRouter } from "./datasets";
+import { tasksRouter } from "./tasks";
+import { tagsRouter } from "./tags";
 
 export const appRouter = router({
 	healthCheck: publicProcedure.query(() => {
@@ -12,5 +16,9 @@ export const appRouter = router({
 		};
 	}),
 	todo: todoRouter,
+	requirement: requirementsRouter,
+	dataset: datasetsRouter,
+	task: tasksRouter,
+	tag: tagsRouter,
 });
 export type AppRouter = typeof appRouter;
