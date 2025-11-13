@@ -1,14 +1,16 @@
 {
   "name": "@cyop/db",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./*": {
       "types": "./dist/*.d.ts",
-      "default": "./src/*.ts"
+      "default": "./dist/*.js"
     }
   },
   "scripts": {
