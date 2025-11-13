@@ -6,7 +6,8 @@
     "build": "next build",
     "dev": "next dev --port=4000",
     "start": "next start",
-    "postinstall": "fumadocs-mdx"
+    "postinstall": "fumadocs-mdx",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "fumadocs-core": "16.0.10",
