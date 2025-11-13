@@ -4,29 +4,33 @@ import UserMenu from "./user-menu";
 
 export default function Header() {
 	const links = [
-		{ to: "/", label: "Home" },
-		{ to: "/dashboard", label: "Dashboard" },
-		{ to: "/todos", label: "Todos" },
+		{ to: "/", label: "概览" },
+		{ to: "/dashboard", label: "控制塔" },
+		{ to: "/todos", label: "示例 API" },
 	] as const;
 
 	return (
-		<div>
-			<div className="flex flex-row items-center justify-between px-2 py-1">
-				<nav className="flex gap-4 text-lg">
-					{links.map(({ to, label }) => {
-						return (
-							<Link key={to} to={to}>
-								{label}
-							</Link>
-						);
-					})}
+		<header className="border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+			<div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+				<nav className="flex items-center gap-4 text-sm text-muted-foreground">
+					{links.map(({ to, label }) => (
+						<Link
+							key={to}
+							to={to}
+							activeProps={{
+								className: "text-foreground font-semibold",
+							}}
+							className="transition hover:text-foreground"
+						>
+							{label}
+						</Link>
+					))}
 				</nav>
 				<div className="flex items-center gap-2">
 					<ModeToggle />
 					<UserMenu />
 				</div>
 			</div>
-			<hr />
-		</div>
+		</header>
 	);
 }
