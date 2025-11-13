@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
 	AlertTriangle,
 	CheckCircle2,
 	ChevronRight,
+	ClipboardList,
+	Database,
 	Loader2,
+	Play,
 	Plus,
 	RefreshCcw,
 	Sparkles,
@@ -14,6 +17,7 @@ import {
 	Users2,
 } from "lucide-react";
 
+import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +28,17 @@ import { Select } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/dashboard")({
+	beforeLoad: async () => {
+		const session = await authClient.getSession();
+		if (!session.data) {
+			redirect({
+				to: "/login",
+				throw: true,
+			});
+		}
+
+		return { session };
+	},
 	component: DashboardView,
 });
 
@@ -54,6 +69,9 @@ const priorityTone: Record<string, "default" | "secondary" | "warning" | "destru
 	urgent: "destructive",
 };
 
+const taskTypes = ["ingest", "caption", "tag", "qa", "distribution"] as const;
+const taskStatusValues = ["queued", "running", "paused", "succeeded", "failed", "blocked"] as const;
+
 const statusTone: Record<
 	string,
 	"default" | "secondary" | "success" | "warning" | "destructive"
@@ -73,6 +91,7 @@ const statusTone: Record<
 };
 
 function DashboardView() {
+	const { session } = Route.useRouteContext();
 	const createPanelRef = useRef<HTMLDivElement>(null);
 	const [formState, setFormState] = useState({
 		title: "",
@@ -83,6 +102,24 @@ function DashboardView() {
 		aiCoverageTarget: 80,
 		priority: "medium",
 		tagHints: "",
+	});
+	const [datasetForm, setDatasetForm] = useState({
+		requirementId: "",
+		name: "",
+		storageBucket: "",
+		imageCount: "0",
+		processedCount: "0",
+		aiCaptionCoverage: "0",
+		autoTagCoverage: "0",
+		reviewCoverage: "0",
+		focusTags: "",
+	});
+	const [taskForm, setTaskForm] = useState({
+		datasetId: "",
+		type: "caption",
+		status: "queued",
+		progress: "0",
+		assignedTo: "",
 	});
 
 	const requirementQuery = useQuery(trpc.requirement.list.queryOptions());
@@ -105,7 +142,7 @@ function DashboardView() {
 			},
 		}),
 	);
-	const updateStatus = useMutation(
+	const updateRequirementStatus = useMutation(
 		trpc.requirement.updateStatus.mutationOptions({
 			onSuccess: () => {
 				requirementQuery.refetch();
@@ -113,9 +150,55 @@ function DashboardView() {
 			},
 		}),
 	);
+	const createDataset = useMutation(
+		trpc.dataset.create.mutationOptions({
+			onSuccess: () => {
+				datasetQuery.refetch();
+				statsQuery.refetch();
+				setDatasetForm({
+					requirementId: "",
+					name: "",
+					storageBucket: "",
+					imageCount: "0",
+					processedCount: "0",
+					aiCaptionCoverage: "0",
+					autoTagCoverage: "0",
+					reviewCoverage: "0",
+					focusTags: "",
+				});
+			},
+		}),
+	);
+	const createTask = useMutation(
+		trpc.task.create.mutationOptions({
+			onSuccess: () => {
+				taskQuery.refetch();
+				setTaskForm({
+					datasetId: "",
+					type: "caption",
+					status: "queued",
+					progress: "0",
+					assignedTo: "",
+				});
+			},
+		}),
+	);
+	const updateTaskStatus = useMutation(
+		trpc.task.updateStatus.mutationOptions({
+			onSuccess: () => {
+				taskQuery.refetch();
+			},
+		}),
+	);
+
+	const requirements = requirementQuery.data ?? [];
+	const datasets = datasetQuery.data ?? [];
+	const tasks = taskQuery.data ?? [];
+	const tags = tagQuery.data ?? [];
+	const stats = statsQuery.data;
 
 	const groupedRequirements = useMemo(() => {
-		type RequirementRow = NonNullable<typeof requirementQuery.data>[number];
+		type RequirementRow = (typeof requirements)[number];
 		const groups = statusOrder.reduce(
 			(acc, status) => {
 				acc[status] = [];
@@ -124,7 +207,7 @@ function DashboardView() {
 			{} as Record<(typeof statusOrder)[number], RequirementRow[]>,
 		);
 
-		(requirementQuery.data ?? []).forEach((item) => {
+		requirements.forEach((item) => {
 			if (statusOrder.includes(item.status as (typeof statusOrder)[number])) {
 				groups[item.status as (typeof statusOrder)[number]].push(item);
 			} else {
@@ -133,18 +216,18 @@ function DashboardView() {
 		});
 
 		return groups;
-	}, [requirementQuery.data]);
+	}, [requirements]);
 
 	const ownerSummary = useMemo(() => {
 		const map = new Map<string, number>();
-		(requirementQuery.data ?? []).forEach((item) => {
+		requirements.forEach((item) => {
 			map.set(item.owner, (map.get(item.owner) ?? 0) + 1);
 		});
 		return Array.from(map.entries())
 			.map(([owner, count]) => ({ owner, count }))
 			.sort((a, b) => b.count - a.count)
 			.slice(0, 4);
-	}, [requirementQuery.data]);
+	}, [requirements]);
 
 	const handleCreateRequirement = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -164,6 +247,42 @@ function DashboardView() {
 		});
 	};
 
+	const handleCreateDataset = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (!datasetForm.requirementId) {
+			return;
+		}
+		const focusTags = datasetForm.focusTags
+			.split(",")
+			.map((tag) => tag.trim())
+			.filter(Boolean);
+		createDataset.mutate({
+			requirementId: Number(datasetForm.requirementId),
+			name: datasetForm.name,
+			storageBucket: datasetForm.storageBucket,
+			imageCount: Number(datasetForm.imageCount),
+			processedCount: Number(datasetForm.processedCount),
+			aiCaptionCoverage: Number(datasetForm.aiCaptionCoverage),
+			autoTagCoverage: Number(datasetForm.autoTagCoverage),
+			reviewCoverage: Number(datasetForm.reviewCoverage),
+			focusTags,
+		});
+	};
+
+	const handleCreateTask = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (!taskForm.datasetId) {
+			return;
+		}
+		createTask.mutate({
+			datasetId: Number(taskForm.datasetId),
+			type: taskForm.type as (typeof taskTypes)[number],
+			status: taskForm.status as (typeof taskStatusValues)[number],
+			progress: Number(taskForm.progress),
+			assignedTo: taskForm.assignedTo || undefined,
+		});
+	};
+
 	const refreshAll = () => {
 		requirementQuery.refetch();
 		statsQuery.refetch();
@@ -171,11 +290,6 @@ function DashboardView() {
 		taskQuery.refetch();
 		tagQuery.refetch();
 	};
-
-	const stats = statsQuery.data;
-	const datasets = datasetQuery.data ?? [];
-	const tasks = taskQuery.data ?? [];
-	const tags = tagQuery.data ?? [];
 
 	return (
 		<div className="h-full overflow-y-auto bg-muted/10">
@@ -191,6 +305,9 @@ function DashboardView() {
 								<p className="mt-2 max-w-2xl text-sm text-muted-foreground">
 									集中管理需求、数据集与自动化任务，追踪 AI caption、标签覆盖率和批量处理进度，
 									让团队成员在统一 UI 中协同推进。
+								</p>
+								<p className="text-xs text-muted-foreground">
+									当前用户：{session.data?.user.email ?? session.data?.user.id}
 								</p>
 							</div>
 						</div>
@@ -309,12 +426,12 @@ function DashboardView() {
 														<Select
 															value={requirement.status}
 															onChange={(event) =>
-																updateStatus.mutate({
+																updateRequirementStatus.mutate({
 																	id: requirement.id,
 																	status: event.target.value as (typeof statusOrder)[number],
 																})
 															}
-															disabled={updateStatus.isPending}
+															disabled={updateRequirementStatus.isPending}
 														>
 															{statusOrder.map((value) => (
 																<option key={value} value={value}>
@@ -512,6 +629,219 @@ function DashboardView() {
 					</div>
 				</section>
 
+				<section className="grid gap-6 lg:grid-cols-2">
+					<Card>
+						<CardHeader>
+							<div className="flex items-center gap-2">
+								<Database className="size-4 text-primary" />
+								<div>
+									<CardTitle>创建数据集</CardTitle>
+									<CardDescription>绑定需求即可派发 bucket、覆盖目标与关注标签。</CardDescription>
+								</div>
+							</div>
+						</CardHeader>
+						<CardContent>
+							<form className="space-y-3" onSubmit={handleCreateDataset}>
+								<Select
+									required
+									value={datasetForm.requirementId}
+									onChange={(event) =>
+										setDatasetForm({ ...datasetForm, requirementId: event.target.value })
+									}
+								>
+									<option value="">选择需求</option>
+									{requirements.map((requirement) => (
+										<option key={requirement.id} value={requirement.id}>
+											{requirement.title}
+										</option>
+									))}
+								</Select>
+								<Input
+									required
+									placeholder="数据集名称"
+									value={datasetForm.name}
+									onChange={(event) =>
+										setDatasetForm({ ...datasetForm, name: event.target.value })
+									}
+								/>
+								<Input
+									required
+									placeholder="存储 Bucket"
+									value={datasetForm.storageBucket}
+									onChange={(event) =>
+										setDatasetForm({ ...datasetForm, storageBucket: event.target.value })
+									}
+								/>
+								<div className="grid grid-cols-3 gap-3">
+									<Input
+										type="number"
+										min={0}
+										placeholder="总数"
+										value={datasetForm.imageCount}
+										onChange={(event) =>
+											setDatasetForm({ ...datasetForm, imageCount: event.target.value })
+										}
+									/>
+									<Input
+										type="number"
+										min={0}
+										placeholder="已处理"
+										value={datasetForm.processedCount}
+										onChange={(event) =>
+											setDatasetForm({ ...datasetForm, processedCount: event.target.value })
+										}
+									/>
+									<Input
+										type="text"
+										placeholder="关注标签：美妆, 室外"
+										value={datasetForm.focusTags}
+										onChange={(event) =>
+											setDatasetForm({ ...datasetForm, focusTags: event.target.value })
+										}
+									/>
+								</div>
+								<div className="grid grid-cols-3 gap-3">
+									<Input
+										type="number"
+										min={0}
+										max={100}
+										placeholder="Caption%"
+										value={datasetForm.aiCaptionCoverage}
+										onChange={(event) =>
+											setDatasetForm({ ...datasetForm, aiCaptionCoverage: event.target.value })
+										}
+									/>
+									<Input
+										type="number"
+										min={0}
+										max={100}
+										placeholder="标签%"
+										value={datasetForm.autoTagCoverage}
+										onChange={(event) =>
+											setDatasetForm({ ...datasetForm, autoTagCoverage: event.target.value })
+										}
+									/>
+									<Input
+										type="number"
+										min={0}
+										max={100}
+										placeholder="Review%"
+										value={datasetForm.reviewCoverage}
+										onChange={(event) =>
+											setDatasetForm({ ...datasetForm, reviewCoverage: event.target.value })
+										}
+									/>
+								</div>
+								<Button
+									type="submit"
+									className="w-full"
+									disabled={createDataset.isPending || requirements.length === 0}
+								>
+									{createDataset.isPending ? (
+										<>
+											<Loader2 className="mr-2 size-4 animate-spin" />
+											创建中
+										</>
+									) : (
+										<>
+											<Plus className="mr-2 size-4" />
+											创建数据集
+										</>
+									)}
+								</Button>
+							</form>
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<div className="flex items-center gap-2">
+								<ClipboardList className="size-4 text-primary" />
+								<div>
+									<CardTitle>调度自动化任务</CardTitle>
+									<CardDescription>关联数据集，即可向后端编排系统发送任务请求。</CardDescription>
+								</div>
+							</div>
+						</CardHeader>
+						<CardContent>
+							<form className="space-y-3" onSubmit={handleCreateTask}>
+								<Select
+									required
+									value={taskForm.datasetId}
+									onChange={(event) =>
+										setTaskForm({ ...taskForm, datasetId: event.target.value })
+									}
+								>
+									<option value="">选择数据集</option>
+									{datasets.map((dataset) => (
+										<option key={dataset.id} value={dataset.id}>
+											{dataset.name}
+										</option>
+									))}
+								</Select>
+								<div className="grid grid-cols-2 gap-3">
+									<Select
+										value={taskForm.type}
+										onChange={(event) => setTaskForm({ ...taskForm, type: event.target.value })}
+									>
+										{taskTypes.map((type) => (
+											<option key={type} value={type}>
+												{type.toUpperCase()}
+											</option>
+										))}
+									</Select>
+									<Select
+										value={taskForm.status}
+										onChange={(event) => setTaskForm({ ...taskForm, status: event.target.value })}
+									>
+										{taskStatusValues.map((status) => (
+											<option key={status} value={status}>
+												{status.toUpperCase()}
+											</option>
+										))}
+									</Select>
+								</div>
+								<div className="grid grid-cols-[1fr_auto] gap-3">
+									<Input
+										type="number"
+										min={0}
+										max={100}
+										placeholder="初始进度 %"
+										value={taskForm.progress}
+										onChange={(event) =>
+											setTaskForm({ ...taskForm, progress: event.target.value })
+										}
+									/>
+									<Input
+										placeholder="负责人（可空）"
+										value={taskForm.assignedTo}
+										onChange={(event) =>
+											setTaskForm({ ...taskForm, assignedTo: event.target.value })
+										}
+									/>
+								</div>
+								<Button
+									type="submit"
+									className="w-full"
+									disabled={createTask.isPending || datasets.length === 0}
+								>
+									{createTask.isPending ? (
+										<>
+											<Loader2 className="mr-2 size-4 animate-spin" />
+											提交中
+										</>
+									) : (
+										<>
+											<Play className="mr-2 size-4" />
+											调度任务
+										</>
+									)}
+								</Button>
+							</form>
+						</CardContent>
+					</Card>
+				</section>
+
 				<section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
 					<Card className="overflow-hidden">
 						<CardHeader>
@@ -549,9 +879,22 @@ function DashboardView() {
 													</div>
 												</td>
 												<td className="py-3">
-													<Badge variant={statusTone[task.status] ?? "secondary"}>
-														{task.status}
-													</Badge>
+													<Select
+														value={task.status}
+														onChange={(event) =>
+															updateTaskStatus.mutate({
+																id: task.id,
+																status: event.target.value as (typeof taskStatusValues)[number],
+															})
+														}
+														disabled={updateTaskStatus.isPending}
+													>
+														{taskStatusValues.map((status) => (
+															<option key={status} value={status}>
+																{status}
+															</option>
+														))}
+													</Select>
 												</td>
 												<td className="py-3">
 													<Progress value={task.progress} className="h-1.5" />

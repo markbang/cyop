@@ -3,7 +3,7 @@ import { datasetTags, datasets, requirements } from "@cyop/db/schema/platform";
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { router, publicProcedure } from "../index";
+import { protectedProcedure, router, publicProcedure } from "../index";
 
 const baseTagInput = z.object({
 	datasetId: z.number().int().positive(),
@@ -33,7 +33,7 @@ export const tagsRouter = router({
 		}));
 	}),
 
-	create: publicProcedure.input(baseTagInput).mutation(async ({ input }) => {
+	create: protectedProcedure.input(baseTagInput).mutation(async ({ input }) => {
 		const [record] = await db
 			.insert(datasetTags)
 			.values({
@@ -48,7 +48,7 @@ export const tagsRouter = router({
 		return record;
 	}),
 
-	updateCoverage: publicProcedure
+	updateCoverage: protectedProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),

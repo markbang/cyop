@@ -9,7 +9,8 @@ import {
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { router, publicProcedure } from "../index";
+import { protectedProcedure, router, publicProcedure } from "../index";
+import { publishAutomationEvent } from "../services/automation";
 
 const taskBaseInput = z.object({
 	datasetId: z.number().int().positive(),
@@ -43,7 +44,7 @@ export const tasksRouter = router({
 		}));
 	}),
 
-	create: publicProcedure.input(taskBaseInput).mutation(async ({ input }) => {
+	create: protectedProcedure.input(taskBaseInput).mutation(async ({ input }) => {
 		const now = new Date();
 		const [record] = await db
 			.insert(automationTasks)
@@ -61,10 +62,22 @@ export const tasksRouter = router({
 					input.status === "succeeded" || input.status === "failed" ? now : null,
 			})
 			.returning();
+		if (!record) {
+			throw new Error("Failed to create automation task");
+		}
+		await publishAutomationEvent({
+			type: "task.created",
+			taskId: record.id,
+			datasetId: record.datasetId,
+			taskType: record.type,
+			status: record.status,
+			assignedTo: record.assignedTo,
+		});
+
 		return record;
 	}),
 
-	updateStatus: publicProcedure
+	updateStatus: protectedProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
@@ -94,6 +107,18 @@ export const tasksRouter = router({
 				.set(updates)
 				.where(eq(automationTasks.id, input.id))
 				.returning();
+			if (!record) {
+				throw new Error("Failed to update automation task");
+			}
+			await publishAutomationEvent({
+				type: "task.updated",
+				taskId: record.id,
+				datasetId: record.datasetId,
+				status: record.status,
+				progress: record.progress,
+				failureReason: record.failureReason,
+			});
+
 			return record;
 		}),
 });

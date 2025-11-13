@@ -9,7 +9,7 @@ import {
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { router, publicProcedure } from "../index";
+import { protectedProcedure, router, publicProcedure } from "../index";
 
 const requirementBaseInput = z.object({
 	title: z.string().min(2),
@@ -34,7 +34,7 @@ export const requirementsRouter = router({
 			.orderBy(desc(requirements.updatedAt));
 	}),
 
-	create: publicProcedure.input(requirementBaseInput).mutation(async ({ input }) => {
+	create: protectedProcedure.input(requirementBaseInput).mutation(async ({ input }) => {
 		const now = new Date();
 		const [record] = await db
 			.insert(requirements)
@@ -58,7 +58,7 @@ export const requirementsRouter = router({
 		return record;
 	}),
 
-	updateStatus: publicProcedure
+	updateStatus: protectedProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),

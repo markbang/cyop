@@ -3,7 +3,8 @@ import { datasets, requirements } from "@cyop/db/schema/platform";
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { router, publicProcedure } from "../index";
+import { protectedProcedure, router, publicProcedure } from "../index";
+import { publishAutomationEvent } from "../services/automation";
 
 const datasetBaseInput = z.object({
 	requirementId: z.number().int().positive(),
@@ -36,7 +37,7 @@ export const datasetsRouter = router({
 		}));
 	}),
 
-	create: publicProcedure.input(datasetBaseInput).mutation(async ({ input }) => {
+	create: protectedProcedure.input(datasetBaseInput).mutation(async ({ input }) => {
 		const now = new Date();
 		const derivedPending =
 			input.pendingCount ?? Math.max(input.imageCount - input.processedCount, 0);
@@ -58,10 +59,24 @@ export const datasetsRouter = router({
 				updatedAt: now,
 			})
 			.returning();
+		if (!record) {
+			throw new Error("Failed to create dataset");
+		}
+		await publishAutomationEvent({
+			type: "dataset.created",
+			datasetId: record.id,
+			requirementId: record.requirementId,
+			focusTags: record.focusTags,
+			targetCoverage: {
+				caption: record.aiCaptionCoverage,
+				tag: record.autoTagCoverage,
+			},
+		});
+
 		return record;
 	}),
 
-	updateMetrics: publicProcedure
+	updateMetrics: protectedProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
@@ -89,6 +104,22 @@ export const datasetsRouter = router({
 				})
 				.where(eq(datasets.id, input.id))
 				.returning();
+			if (!record) {
+				throw new Error("Failed to update dataset metrics");
+			}
+			await publishAutomationEvent({
+				type: "dataset.metrics_updated",
+				datasetId: record.id,
+				imageCount: record.imageCount,
+				processedCount: record.processedCount,
+				pendingCount: record.pendingCount,
+				coverage: {
+					caption: record.aiCaptionCoverage,
+					tag: record.autoTagCoverage,
+					review: record.reviewCoverage,
+				},
+			});
+
 			return record;
 		}),
 });
