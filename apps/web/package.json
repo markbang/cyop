@@ -10,7 +10,7 @@
     "start": "vite",
     "check-types": "tsc --noEmit",
     "wrangler:dev": "wrangler dev --port=3001",
-    "deploy": "bun run build && wrangler deploy"
+    "deploy": "bun run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -49,7 +49,6 @@
     "vite": "^6.2.2",
     "@tanstack/react-query-devtools": "^5.85.5",
     "@cyop/config": "workspace:*",
-    "@cloudflare/vite-plugin": "^1.13.8",
-    "wrangler": "^4.40.3"
+    "@cloudflare/vite-plugin": "^1.13.8"
   }
 }
