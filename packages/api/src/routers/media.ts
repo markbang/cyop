@@ -14,6 +14,7 @@ import {
 	buildPublicUrl,
 	buildStorageKey,
 	createPresignedUploadUrl,
+	deleteStorageObject,
 	getStorageBucket,
 } from "../services/storage";
 
@@ -168,5 +169,35 @@ export const mediaRouter = router({
 			}
 
 			return asset;
+		}),
+
+	delete: protectedProcedure
+		.input(
+			z.object({
+				assetId: z.number().int().positive(),
+				removeFromStorage: z.boolean().default(true),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			const [asset] = await db
+				.select()
+				.from(mediaAssets)
+				.where(eq(mediaAssets.id, input.assetId))
+				.limit(1);
+
+			if (!asset) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Asset not found",
+				});
+			}
+
+			await db.delete(mediaAssets).where(eq(mediaAssets.id, input.assetId));
+
+			if (input.removeFromStorage) {
+				await deleteStorageObject(asset.storageKey);
+			}
+
+			return { success: true };
 		}),
 });

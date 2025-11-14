@@ -110,15 +110,19 @@ export function getStorageBucket() {
 	return getStorageConfig().bucket;
 }
 
-export function createPresignedUploadUrl({
+type PresignParams = {
+	key: string;
+	method?: "PUT" | "GET" | "DELETE";
+	contentType?: string;
+	expiresIn?: number;
+};
+
+function createPresignedRequest({
 	key,
+	method = "PUT",
 	contentType,
 	expiresIn = 900,
-}: {
-	key: string;
-	contentType: string;
-	expiresIn?: number;
-}): PresignedRequest {
+}: PresignParams): PresignedRequest {
 	const config = getStorageConfig();
 	const now = new Date();
 	const amzDate = toAmzDate(now);
@@ -127,9 +131,13 @@ export function createPresignedUploadUrl({
 	const canonicalUri = `/${config.bucket}/${encodeKey(key)}`;
 	const host = new URL(config.endpoint).host;
 
-	const signedHeaders = `content-type;host`;
-	const canonicalHeaders = `content-type:${contentType}\nhost:${host}\n`;
-	const payloadHash = "UNSIGNED-PAYLOAD";
+	let signedHeaders = "host";
+	let canonicalHeaders = `host:${host}\n`;
+	if (contentType) {
+		canonicalHeaders = `content-type:${contentType}\n${canonicalHeaders}`;
+		signedHeaders = `content-type;${signedHeaders}`;
+	}
+	const payloadHash = method === "PUT" ? "UNSIGNED-PAYLOAD" : hashSha256("");
 
 	const credential = `${config.accessKeyId}/${credentialScope}`;
 	const queryParams: Array<[string, string]> = [
@@ -146,7 +154,7 @@ export function createPresignedUploadUrl({
 		.join("&");
 
 	const canonicalRequest = [
-		"PUT",
+		method,
 		canonicalUri,
 		canonicalQuerystring,
 		canonicalHeaders,
@@ -169,8 +177,32 @@ export function createPresignedUploadUrl({
 
 	return {
 		url: presignedUrl,
-		headers: {
-			"Content-Type": contentType,
-		},
+		headers: contentType ? { "Content-Type": contentType } : {},
 	};
+}
+
+export function createPresignedUploadUrl(params: {
+	key: string;
+	contentType: string;
+	expiresIn?: number;
+}) {
+	return createPresignedRequest({ ...params, method: "PUT" });
+}
+
+export async function deleteStorageObject(key: string) {
+	try {
+		const request = createPresignedRequest({
+			key,
+			method: "DELETE",
+			expiresIn: 60,
+		});
+		const response = await fetch(request.url, {
+			method: "DELETE",
+		});
+		if (!response.ok) {
+			console.error("S3 delete error", await response.text());
+		}
+	} catch (error) {
+		console.error("Failed to delete storage object", error);
+	}
 }

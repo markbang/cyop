@@ -6,6 +6,7 @@ import {
 	Clipboard,
 	Images,
 	Loader2,
+	Trash2,
 	Upload,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,7 +42,12 @@ export const Route = createFileRoute("/media")({
 
 function MediaLibrary() {
 	const datasetQuery = useQuery(trpc.dataset.list.queryOptions());
-	const mediaQuery = useQuery(trpc.media.list.queryOptions());
+	const [filterDataset, setFilterDataset] = useState("");
+	const mediaQuery = useQuery(
+		trpc.media.list.queryOptions(
+			filterDataset ? { datasetId: Number(filterDataset) } : undefined,
+		),
+	);
 
 	const requestUpload = useMutation(
 		trpc.media.requestUpload.mutationOptions({
@@ -53,6 +59,17 @@ function MediaLibrary() {
 	const finalizeUpload = useMutation(
 		trpc.media.finalizeUpload.mutationOptions({
 			onSuccess: () => {
+				mediaQuery.refetch();
+			},
+			onError: (error) => {
+				toast.error(error.message);
+			},
+		}),
+	);
+	const deleteMedia = useMutation(
+		trpc.media.delete.mutationOptions({
+			onSuccess: () => {
+				toast.success("素材已删除");
 				mediaQuery.refetch();
 			},
 			onError: (error) => {
@@ -143,6 +160,13 @@ function MediaLibrary() {
 					: upload,
 			),
 		);
+	};
+
+	const handleDelete = (assetId: number, name: string) => {
+		if (!window.confirm(`确定删除素材「${name}」吗？`)) {
+			return;
+		}
+		deleteMedia.mutate({ assetId, removeFromStorage: true });
 	};
 
 	const isUploading = requestUpload.isPending || finalizeUpload.isPending;
@@ -240,19 +264,33 @@ function MediaLibrary() {
 				</section>
 
 				<section className="space-y-4">
-					<div className="flex items-center justify-between">
+					<div className="flex flex-wrap items-center justify-between gap-3">
 						<div>
 							<h2 className="text-xl font-semibold">素材列表</h2>
 							<p className="text-sm text-muted-foreground">
 								最近上传的素材会显示在此，包含预览、所属数据集与链接复制能力。
 							</p>
 						</div>
-						<Button variant="outline" onClick={() => mediaQuery.refetch()}>
-							<Loader2
-								className={`mr-2 size-4 ${mediaQuery.isRefetching ? "animate-spin" : ""}`}
-							/>
-							刷新
-						</Button>
+						<div className="flex flex-wrap items-center gap-2">
+							<Select
+								value={filterDataset}
+								onChange={(event) => setFilterDataset(event.target.value)}
+								className="w-48"
+							>
+								<option value="">全部数据集</option>
+								{datasets.map((dataset) => (
+									<option key={dataset.id} value={dataset.id}>
+										{dataset.name}
+									</option>
+								))}
+							</Select>
+							<Button variant="outline" onClick={() => mediaQuery.refetch()}>
+								<Loader2
+									className={`mr-2 size-4 ${mediaQuery.isRefetching ? "animate-spin" : ""}`}
+								/>
+								刷新
+							</Button>
+						</div>
 					</div>
 					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						{assets.length === 0 ? (
@@ -301,16 +339,26 @@ function MediaLibrary() {
 											<span>·</span>
 											<span>{asset.mimeType}</span>
 										</div>
-										<Button
-											variant="outline"
-											size="sm"
-											className="w-full"
-											onClick={() => copyLink(asset.publicUrl)}
-											disabled={!asset.publicUrl}
-										>
-											<Clipboard className="mr-2 size-4" />
-											复制链接
-										</Button>
+										<div className="grid grid-cols-2 gap-2">
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => copyLink(asset.publicUrl)}
+												disabled={!asset.publicUrl}
+											>
+												<Clipboard className="mr-2 size-4" />
+												复制链接
+											</Button>
+											<Button
+												variant="destructive"
+												size="sm"
+												onClick={() => handleDelete(asset.id, asset.originalName)}
+												disabled={deleteMedia.isPending}
+											>
+												<Trash2 className="mr-2 size-4" />
+												删除
+											</Button>
+										</div>
 									</CardContent>
 								</Card>
 							))
