@@ -30,8 +30,10 @@
 	"scripts": {
 		"check": "biome check --write .",
 		"prepare": "husky",
+		"postinstall": "bun run build:ui",
 		"dev": "turbo dev",
 		"build": "turbo build",
+		"build:ui": "turbo run build --filter=@cyop/ui",
 		"check-types": "turbo check-types",
 		"dev:native": "turbo -F native dev",
 		"dev:web": "turbo -F web dev",

@@ -4,6 +4,7 @@
 		"composite": true,
 		"outDir": "dist",
 		"baseUrl": ".",
+		"types": ["bun", "node"],
 		"paths": {
 			"@/*": ["./src/*"]
 		},
