@@ -1,8 +1,8 @@
-import z from "zod";
-import { router, publicProcedure } from "../index";
+import { db } from "@cyop/db";
 import { todo } from "@cyop/db/schema/todo";
 import { eq } from "drizzle-orm";
-import { db } from "@cyop/db";
+import z from "zod";
+import { publicProcedure, router } from "../index";
 
 export const todoRouter = router({
 	getAll: publicProcedure.query(async () => {

@@ -1,4 +1,4 @@
-import { createHmac, createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 
 const AWS_ALGORITHM = "AWS4-HMAC-SHA256";
 const SERVICE = "s3";
@@ -19,6 +19,14 @@ type PresignedRequest = {
 
 let cachedConfig: StorageConfig | null = null;
 
+function normalizeEndpoint(endpoint: string) {
+	const trimmed = endpoint.trim();
+	const withScheme = /^https?:\/\//i.test(trimmed)
+		? trimmed
+		: `https://${trimmed}`;
+	return withScheme.replace(/\/$/, "");
+}
+
 function getStorageConfig(): StorageConfig {
 	if (cachedConfig) {
 		return cachedConfig;
@@ -28,10 +36,17 @@ function getStorageConfig(): StorageConfig {
 	const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
 	const bucket = process.env.S3_BUCKET;
 	const region = process.env.S3_REGION;
-	const endpoint =
-		process.env.S3_ENDPOINT || (region ? `https://s3.${region}.amazonaws.com` : undefined);
+	const endpointValue =
+		process.env.S3_ENDPOINT ||
+		(region ? `https://s3.${region}.amazonaws.com` : undefined);
 
-	if (!accessKeyId || !secretAccessKey || !bucket || !region || !endpoint) {
+	if (
+		!accessKeyId ||
+		!secretAccessKey ||
+		!bucket ||
+		!region ||
+		!endpointValue
+	) {
 		throw new Error(
 			"S3 storage is not configured. Please set S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET, S3_REGION and S3_ENDPOINT.",
 		);
@@ -42,7 +57,7 @@ function getStorageConfig(): StorageConfig {
 		secretAccessKey,
 		bucket,
 		region,
-		endpoint: endpoint.replace(/\/$/, ""),
+		endpoint: normalizeEndpoint(endpointValue),
 		forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
 	};
 
@@ -58,7 +73,10 @@ function toDateStamp(date: Date) {
 }
 
 function encodeRfc3986(value: string) {
-	return encodeURIComponent(value).replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+	return encodeURIComponent(value).replace(
+		/[!'()*]/g,
+		(char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+	);
 }
 
 function hashSha256(value: string) {
@@ -97,13 +115,50 @@ export function buildStorageKey(datasetId: number, originalName: string) {
 	return `datasets/${datasetId}/${timestamp}-${normalizedName || "asset"}`;
 }
 
-export function buildPublicUrl(key: string) {
-	const customBase = process.env.ASSET_PUBLIC_URL?.replace(/\/$/, "");
-	if (customBase) {
-		return `${customBase}/${key}`;
+function joinUriSegments(...segments: Array<string | undefined>) {
+	const parts = segments
+		.filter((segment): segment is string =>
+			Boolean(segment && segment.trim().length > 0),
+		)
+		.map((segment) => segment.replace(/^\/+|\/+$/g, ""));
+	if (parts.length === 0) {
+		return "/";
 	}
-	const { endpoint, bucket } = getStorageConfig();
-	return `${endpoint}/${bucket}/${key}`;
+	return `/${parts.join("/")}`;
+}
+
+function resolveObjectLocation(config: StorageConfig, key: string) {
+	const endpointUrl = new URL(config.endpoint);
+	const pathPrefix = endpointUrl.pathname === "/" ? "" : endpointUrl.pathname;
+	const encodedKey = encodeKey(key);
+
+	if (config.forcePathStyle) {
+		const canonicalUri = joinUriSegments(pathPrefix, config.bucket, encodedKey);
+		return {
+			host: endpointUrl.host,
+			canonicalUri,
+			baseUrl: `${endpointUrl.origin}${canonicalUri}`,
+		};
+	}
+
+	const canonicalUri = joinUriSegments(pathPrefix, encodedKey);
+	const virtualHost = `${config.bucket}.${endpointUrl.host}`;
+
+	return {
+		host: virtualHost,
+		canonicalUri,
+		baseUrl: `${endpointUrl.protocol}//${virtualHost}${canonicalUri}`,
+	};
+}
+
+export function buildPublicUrl(key: string) {
+	const customBase = process.env.ASSET_PUBLIC_URL?.trim().replace(/\/$/, "");
+	if (customBase) {
+		return `${customBase}/${encodeKey(key)}`;
+	}
+	const config = getStorageConfig();
+	const { baseUrl } = resolveObjectLocation(config, key);
+	return baseUrl;
 }
 
 export function getStorageBucket() {
@@ -124,12 +179,13 @@ function createPresignedRequest({
 	expiresIn = 900,
 }: PresignParams): PresignedRequest {
 	const config = getStorageConfig();
+	const location = resolveObjectLocation(config, key);
 	const now = new Date();
 	const amzDate = toAmzDate(now);
 	const dateStamp = toDateStamp(now);
 	const credentialScope = `${dateStamp}/${config.region}/${SERVICE}/aws4_request`;
-	const canonicalUri = `/${config.bucket}/${encodeKey(key)}`;
-	const host = new URL(config.endpoint).host;
+	const canonicalUri = location.canonicalUri;
+	const host = location.host;
 
 	let signedHeaders = "host";
 	let canonicalHeaders = `host:${host}\n`;
@@ -169,11 +225,14 @@ function createPresignedRequest({
 		hashSha256(canonicalRequest),
 	].join("\n");
 
-	const signingKey = getSignatureKey(config.secretAccessKey, dateStamp, config.region);
+	const signingKey = getSignatureKey(
+		config.secretAccessKey,
+		dateStamp,
+		config.region,
+	);
 	const signature = signHex(signingKey, stringToSign);
 
-	const baseUrl = `${config.endpoint}/${config.bucket}/${encodeKey(key)}`;
-	const presignedUrl = `${baseUrl}?${canonicalQuerystring}&X-Amz-Signature=${signature}`;
+	const presignedUrl = `${location.baseUrl}?${canonicalQuerystring}&X-Amz-Signature=${signature}`;
 
 	return {
 		url: presignedUrl,
@@ -198,6 +257,7 @@ export async function deleteStorageObject(key: string) {
 		});
 		const response = await fetch(request.url, {
 			method: "DELETE",
+			headers: request.headers,
 		});
 		if (!response.ok) {
 			console.error("S3 delete error", await response.text());

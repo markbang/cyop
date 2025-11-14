@@ -17,6 +17,10 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
-		"types": ["bun"]
+		"types": ["bun"],
+		"paths": {
+			"@cyop/ui": ["../ui/dist"],
+			"@cyop/ui/*": ["../ui/dist/*"]
+		}
 	}
 }

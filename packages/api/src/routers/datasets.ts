@@ -3,7 +3,7 @@ import { datasets, requirements } from "@cyop/db/schema/platform";
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { protectedProcedure, router, publicProcedure } from "../index";
+import { protectedProcedure, publicProcedure, router } from "../index";
 import { publishAutomationEvent } from "../services/automation";
 
 const datasetBaseInput = z.object({
@@ -37,44 +37,47 @@ export const datasetsRouter = router({
 		}));
 	}),
 
-	create: protectedProcedure.input(datasetBaseInput).mutation(async ({ input }) => {
-		const now = new Date();
-		const derivedPending =
-			input.pendingCount ?? Math.max(input.imageCount - input.processedCount, 0);
-		const [record] = await db
-			.insert(datasets)
-			.values({
-				requirementId: input.requirementId,
-				name: input.name,
-				storageBucket: input.storageBucket,
-				imageCount: input.imageCount,
-				processedCount: input.processedCount,
-				pendingCount: derivedPending,
-				aiCaptionCoverage: input.aiCaptionCoverage,
-				autoTagCoverage: input.autoTagCoverage,
-				reviewCoverage: input.reviewCoverage,
-				focusTags: input.focusTags,
-				lastRunAt: input.lastRunAt ?? null,
-				createdAt: now,
-				updatedAt: now,
-			})
-			.returning();
-		if (!record) {
-			throw new Error("Failed to create dataset");
-		}
-		await publishAutomationEvent({
-			type: "dataset.created",
-			datasetId: record.id,
-			requirementId: record.requirementId,
-			focusTags: record.focusTags,
-			targetCoverage: {
-				caption: record.aiCaptionCoverage,
-				tag: record.autoTagCoverage,
-			},
-		});
+	create: protectedProcedure
+		.input(datasetBaseInput)
+		.mutation(async ({ input }) => {
+			const now = new Date();
+			const derivedPending =
+				input.pendingCount ??
+				Math.max(input.imageCount - input.processedCount, 0);
+			const [record] = await db
+				.insert(datasets)
+				.values({
+					requirementId: input.requirementId,
+					name: input.name,
+					storageBucket: input.storageBucket,
+					imageCount: input.imageCount,
+					processedCount: input.processedCount,
+					pendingCount: derivedPending,
+					aiCaptionCoverage: input.aiCaptionCoverage,
+					autoTagCoverage: input.autoTagCoverage,
+					reviewCoverage: input.reviewCoverage,
+					focusTags: input.focusTags,
+					lastRunAt: input.lastRunAt ?? null,
+					createdAt: now,
+					updatedAt: now,
+				})
+				.returning();
+			if (!record) {
+				throw new Error("Failed to create dataset");
+			}
+			await publishAutomationEvent({
+				type: "dataset.created",
+				datasetId: record.id,
+				requirementId: record.requirementId,
+				focusTags: record.focusTags,
+				targetCoverage: {
+					caption: record.aiCaptionCoverage,
+					tag: record.autoTagCoverage,
+				},
+			});
 
-		return record;
-	}),
+			return record;
+		}),
 
 	updateMetrics: protectedProcedure
 		.input(
@@ -90,7 +93,8 @@ export const datasetsRouter = router({
 		)
 		.mutation(async ({ input }) => {
 			const derivedPending =
-				input.pendingCount ?? Math.max(input.imageCount - input.processedCount, 0);
+				input.pendingCount ??
+				Math.max(input.imageCount - input.processedCount, 0);
 			const [record] = await db
 				.update(datasets)
 				.set({

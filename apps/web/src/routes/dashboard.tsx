@@ -1,7 +1,18 @@
-import type { ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+	Input,
+	Progress,
+	Select,
+	Textarea,
+} from "@cyop/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	CheckCircle2,
@@ -16,16 +27,10 @@ import {
 	Tag,
 	Users2,
 } from "lucide-react";
-
+import type { ChangeEvent, ReactNode } from "react";
+import { useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/dashboard")({
 	beforeLoad: async () => {
@@ -52,7 +57,10 @@ const statusOrder = [
 	"blocked",
 ] as const;
 
-const statusCopy: Record<(typeof statusOrder)[number], { label: string; helper: string }> = {
+const statusCopy: Record<
+	(typeof statusOrder)[number],
+	{ label: string; helper: string }
+> = {
 	intake: { label: "需求收集", helper: "等待评估" },
 	design: { label: "方案设计", helper: "定义规则" },
 	sourcing: { label: "素材采集", helper: "数据回收" },
@@ -62,7 +70,10 @@ const statusCopy: Record<(typeof statusOrder)[number], { label: string; helper: 
 	blocked: { label: "阻塞", helper: "需要支援" },
 };
 
-const priorityTone: Record<string, "default" | "secondary" | "warning" | "destructive"> = {
+const priorityTone: Record<
+	string,
+	"default" | "secondary" | "warning" | "destructive"
+> = {
 	low: "secondary",
 	medium: "default",
 	high: "warning",
@@ -70,7 +81,14 @@ const priorityTone: Record<string, "default" | "secondary" | "warning" | "destru
 };
 
 const taskTypes = ["ingest", "caption", "tag", "qa", "distribution"] as const;
-const taskStatusValues = ["queued", "running", "paused", "succeeded", "failed", "blocked"] as const;
+const taskStatusValues = [
+	"queued",
+	"running",
+	"paused",
+	"succeeded",
+	"failed",
+	"blocked",
+] as const;
 
 const statusTone: Record<
 	string,
@@ -299,14 +317,15 @@ function DashboardView() {
 						<div className="space-y-3">
 							<Badge variant="outline">CYOP 控制塔</Badge>
 							<div>
-								<h1 className="text-3xl font-semibold tracking-tight">
+								<h1 className="font-semibold text-3xl tracking-tight">
 									图像生产全链路 · 实时调度面板
 								</h1>
-								<p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-									集中管理需求、数据集与自动化任务，追踪 AI caption、标签覆盖率和批量处理进度，
-									让团队成员在统一 UI 中协同推进。
+								<p className="mt-2 max-w-2xl text-muted-foreground text-sm">
+									集中管理需求、数据集与自动化任务，追踪 AI
+									caption、标签覆盖率和批量处理进度， 让团队成员在统一 UI
+									中协同推进。
 								</p>
-								<p className="text-xs text-muted-foreground">
+								<p className="text-muted-foreground text-xs">
 									当前用户：{session.data?.user.email ?? session.data?.user.id}
 								</p>
 							</div>
@@ -323,7 +342,9 @@ function DashboardView() {
 							<Button
 								size="sm"
 								onClick={() => {
-									createPanelRef.current?.scrollIntoView({ behavior: "smooth" });
+									createPanelRef.current?.scrollIntoView({
+										behavior: "smooth",
+									});
 								}}
 							>
 								<Sparkles className="mr-2 size-4" />
@@ -366,12 +387,16 @@ function DashboardView() {
 				<section className="space-y-4">
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<div>
-							<h2 className="text-xl font-semibold">需求看板</h2>
-							<p className="text-sm text-muted-foreground">
+							<h2 className="font-semibold text-xl">需求看板</h2>
+							<p className="text-muted-foreground text-sm">
 								拖拽式布局可快速获知瓶颈，点击状态即可同步控制塔。
 							</p>
 						</div>
-						<Button variant="link" className="px-0 text-primary" onClick={refreshAll}>
+						<Button
+							variant="link"
+							className="px-0 text-primary"
+							onClick={refreshAll}
+						>
 							查看最新进度
 							<ChevronRight className="ml-1 size-4" />
 						</Button>
@@ -387,7 +412,9 @@ function DashboardView() {
 												<CardTitle className="text-base">
 													{statusCopy[status].label}
 												</CardTitle>
-												<CardDescription>{statusCopy[status].helper}</CardDescription>
+												<CardDescription>
+													{statusCopy[status].helper}
+												</CardDescription>
 											</div>
 											<Badge variant={statusTone[status]}>
 												{requirementsInColumn.length}
@@ -396,7 +423,7 @@ function DashboardView() {
 									</CardHeader>
 									<CardContent className="flex flex-1 flex-col gap-3 overflow-y-auto">
 										{requirementsInColumn.length === 0 ? (
-											<p className="text-sm text-muted-foreground">暂无卡片</p>
+											<p className="text-muted-foreground text-sm">暂无卡片</p>
 										) : (
 											requirementsInColumn.map((requirement) => {
 												return (
@@ -406,29 +433,40 @@ function DashboardView() {
 													>
 														<div className="flex items-start justify-between gap-2">
 															<div>
-																<p className="font-medium">{requirement.title}</p>
-																<p className="text-xs text-muted-foreground">
+																<p className="font-medium">
+																	{requirement.title}
+																</p>
+																<p className="text-muted-foreground text-xs">
 																	{requirement.owner} · {requirement.team}
 																</p>
 															</div>
-															<Badge variant={priorityTone[requirement.priority]}>
+															<Badge
+																variant={priorityTone[requirement.priority]}
+															>
 																{requirement.priority.toUpperCase()}
 															</Badge>
 														</div>
-														<p className="text-sm text-muted-foreground line-clamp-3">
+														<p className="line-clamp-3 text-muted-foreground text-sm">
 															{requirement.description}
 														</p>
-														<div className="flex items-center gap-2 text-xs text-muted-foreground">
-															<span>目标容量 {requirement.expectedImages} 张</span>
+														<div className="flex items-center gap-2 text-muted-foreground text-xs">
+															<span>
+																目标容量 {requirement.expectedImages} 张
+															</span>
 															<span>·</span>
-															<span>AI 目标 {requirement.aiCoverageTarget}%</span>
+															<span>
+																AI 目标 {requirement.aiCoverageTarget}%
+															</span>
 														</div>
 														<Select
 															value={requirement.status}
-															onChange={(event) =>
+															onChange={(
+																event: ChangeEvent<HTMLSelectElement>,
+															) =>
 																updateRequirementStatus.mutate({
 																	id: requirement.id,
-																	status: event.target.value as (typeof statusOrder)[number],
+																	status: event.target
+																		.value as (typeof statusOrder)[number],
 																})
 															}
 															disabled={updateRequirementStatus.isPending}
@@ -447,7 +485,7 @@ function DashboardView() {
 																	</Badge>
 																))
 															) : (
-																<span className="text-xs text-muted-foreground">
+																<span className="text-muted-foreground text-xs">
 																	暂无标签提示
 																</span>
 															)}
@@ -468,11 +506,12 @@ function DashboardView() {
 						<CardHeader>
 							<CardTitle>数据集健康度</CardTitle>
 							<CardDescription>
-								总览 AI caption、标签覆盖率与待处理容量，快速定位需提效的数据集。
+								总览 AI
+								caption、标签覆盖率与待处理容量，快速定位需提效的数据集。
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<div className="grid grid-cols-5 items-center gap-4 text-xs font-medium text-muted-foreground">
+							<div className="grid grid-cols-5 items-center gap-4 font-medium text-muted-foreground text-xs">
 								<span>数据集</span>
 								<span className="text-center">AI Caption</span>
 								<span className="text-center">标签</span>
@@ -481,13 +520,17 @@ function DashboardView() {
 							</div>
 							<div className="space-y-3">
 								{datasets.length === 0 ? (
-									<p className="text-sm text-muted-foreground">暂无数据集，先创建一个需求吧。</p>
+									<p className="text-muted-foreground text-sm">
+										暂无数据集，先创建一个需求吧。
+									</p>
 								) : (
 									datasets.map((dataset) => {
 										const pendingRate =
 											dataset.imageCount === 0
 												? 0
-												: Math.round((dataset.pendingCount / dataset.imageCount) * 100);
+												: Math.round(
+														(dataset.pendingCount / dataset.imageCount) * 100,
+													);
 										return (
 											<div
 												key={dataset.id}
@@ -495,26 +538,31 @@ function DashboardView() {
 											>
 												<div>
 													<p className="font-medium">{dataset.name}</p>
-													<p className="text-xs text-muted-foreground">
+													<p className="text-muted-foreground text-xs">
 														{dataset.requirement?.title ?? "未关联需求"}
 													</p>
 												</div>
 												<div>
 													<Progress value={dataset.aiCaptionCoverage} />
-													<p className="mt-1 text-center text-xs text-muted-foreground">
+													<p className="mt-1 text-center text-muted-foreground text-xs">
 														{dataset.aiCaptionCoverage}%
 													</p>
 												</div>
 												<div>
-													<Progress value={dataset.autoTagCoverage} className="bg-emerald-50" />
-													<p className="mt-1 text-center text-xs text-muted-foreground">
+													<Progress
+														value={dataset.autoTagCoverage}
+														className="bg-emerald-50"
+													/>
+													<p className="mt-1 text-center text-muted-foreground text-xs">
 														{dataset.autoTagCoverage}%
 													</p>
 												</div>
-												<div className="text-center text-xs text-muted-foreground">
+												<div className="text-center text-muted-foreground text-xs">
 													{dataset.pendingCount} 张 ({pendingRate}%)
 												</div>
-												<div className="text-right text-xs font-mono">{dataset.storageBucket}</div>
+												<div className="text-right font-mono text-xs">
+													{dataset.storageBucket}
+												</div>
 											</div>
 										);
 									})
@@ -537,14 +585,19 @@ function DashboardView() {
 										required
 										placeholder="需求标题"
 										value={formState.title}
-										onChange={(event) => setFormState({ ...formState, title: event.target.value })}
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setFormState({ ...formState, title: event.target.value })
+										}
 									/>
 									<Textarea
 										required
 										placeholder="需求背景、业务目标..."
 										value={formState.description}
-										onChange={(event) =>
-											setFormState({ ...formState, description: event.target.value })
+										onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+											setFormState({
+												...formState,
+												description: event.target.value,
+											})
 										}
 									/>
 									<div className="grid grid-cols-2 gap-3">
@@ -552,15 +605,18 @@ function DashboardView() {
 											required
 											placeholder="Owner"
 											value={formState.owner}
-											onChange={(event) =>
-												setFormState({ ...formState, owner: event.target.value })
+											onChange={(event: ChangeEvent<HTMLInputElement>) =>
+												setFormState({
+													...formState,
+													owner: event.target.value,
+												})
 											}
 										/>
 										<Input
 											required
 											placeholder="团队/渠道"
 											value={formState.team}
-											onChange={(event) =>
+											onChange={(event: ChangeEvent<HTMLInputElement>) =>
 												setFormState({ ...formState, team: event.target.value })
 											}
 										/>
@@ -571,7 +627,7 @@ function DashboardView() {
 											min={0}
 											placeholder="期望图片量"
 											value={formState.expectedImages}
-											onChange={(event) =>
+											onChange={(event: ChangeEvent<HTMLInputElement>) =>
 												setFormState({
 													...formState,
 													expectedImages: Number(event.target.value),
@@ -584,7 +640,7 @@ function DashboardView() {
 											max={100}
 											placeholder="AI覆盖目标 %"
 											value={formState.aiCoverageTarget}
-											onChange={(event) =>
+											onChange={(event: ChangeEvent<HTMLInputElement>) =>
 												setFormState({
 													...formState,
 													aiCoverageTarget: Number(event.target.value),
@@ -594,8 +650,11 @@ function DashboardView() {
 									</div>
 									<Select
 										value={formState.priority}
-										onChange={(event) =>
-											setFormState({ ...formState, priority: event.target.value })
+										onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+											setFormState({
+												...formState,
+												priority: event.target.value,
+											})
 										}
 									>
 										<option value="low">低优先级</option>
@@ -606,11 +665,18 @@ function DashboardView() {
 									<Input
 										placeholder="标签提示，逗号分隔，例如：电商, 宠物, 室外"
 										value={formState.tagHints}
-										onChange={(event) =>
-											setFormState({ ...formState, tagHints: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setFormState({
+												...formState,
+												tagHints: event.target.value,
+											})
 										}
 									/>
-									<Button type="submit" className="w-full" disabled={createRequirement.isPending}>
+									<Button
+										type="submit"
+										className="w-full"
+										disabled={createRequirement.isPending}
+									>
 										{createRequirement.isPending ? (
 											<>
 												<Loader2 className="mr-2 size-4 animate-spin" />
@@ -636,7 +702,9 @@ function DashboardView() {
 								<Database className="size-4 text-primary" />
 								<div>
 									<CardTitle>创建数据集</CardTitle>
-									<CardDescription>绑定需求即可派发 bucket、覆盖目标与关注标签。</CardDescription>
+									<CardDescription>
+										绑定需求即可派发 bucket、覆盖目标与关注标签。
+									</CardDescription>
 								</div>
 							</div>
 						</CardHeader>
@@ -645,8 +713,11 @@ function DashboardView() {
 								<Select
 									required
 									value={datasetForm.requirementId}
-									onChange={(event) =>
-										setDatasetForm({ ...datasetForm, requirementId: event.target.value })
+									onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+										setDatasetForm({
+											...datasetForm,
+											requirementId: event.target.value,
+										})
 									}
 								>
 									<option value="">选择需求</option>
@@ -660,7 +731,7 @@ function DashboardView() {
 									required
 									placeholder="数据集名称"
 									value={datasetForm.name}
-									onChange={(event) =>
+									onChange={(event: ChangeEvent<HTMLInputElement>) =>
 										setDatasetForm({ ...datasetForm, name: event.target.value })
 									}
 								/>
@@ -668,8 +739,11 @@ function DashboardView() {
 									required
 									placeholder="存储 Bucket"
 									value={datasetForm.storageBucket}
-									onChange={(event) =>
-										setDatasetForm({ ...datasetForm, storageBucket: event.target.value })
+									onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										setDatasetForm({
+											...datasetForm,
+											storageBucket: event.target.value,
+										})
 									}
 								/>
 								<div className="grid grid-cols-3 gap-3">
@@ -678,8 +752,11 @@ function DashboardView() {
 										min={0}
 										placeholder="总数"
 										value={datasetForm.imageCount}
-										onChange={(event) =>
-											setDatasetForm({ ...datasetForm, imageCount: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setDatasetForm({
+												...datasetForm,
+												imageCount: event.target.value,
+											})
 										}
 									/>
 									<Input
@@ -687,16 +764,22 @@ function DashboardView() {
 										min={0}
 										placeholder="已处理"
 										value={datasetForm.processedCount}
-										onChange={(event) =>
-											setDatasetForm({ ...datasetForm, processedCount: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setDatasetForm({
+												...datasetForm,
+												processedCount: event.target.value,
+											})
 										}
 									/>
 									<Input
 										type="text"
 										placeholder="关注标签：美妆, 室外"
 										value={datasetForm.focusTags}
-										onChange={(event) =>
-											setDatasetForm({ ...datasetForm, focusTags: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setDatasetForm({
+												...datasetForm,
+												focusTags: event.target.value,
+											})
 										}
 									/>
 								</div>
@@ -707,8 +790,11 @@ function DashboardView() {
 										max={100}
 										placeholder="Caption%"
 										value={datasetForm.aiCaptionCoverage}
-										onChange={(event) =>
-											setDatasetForm({ ...datasetForm, aiCaptionCoverage: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setDatasetForm({
+												...datasetForm,
+												aiCaptionCoverage: event.target.value,
+											})
 										}
 									/>
 									<Input
@@ -717,8 +803,11 @@ function DashboardView() {
 										max={100}
 										placeholder="标签%"
 										value={datasetForm.autoTagCoverage}
-										onChange={(event) =>
-											setDatasetForm({ ...datasetForm, autoTagCoverage: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setDatasetForm({
+												...datasetForm,
+												autoTagCoverage: event.target.value,
+											})
 										}
 									/>
 									<Input
@@ -727,15 +816,20 @@ function DashboardView() {
 										max={100}
 										placeholder="Review%"
 										value={datasetForm.reviewCoverage}
-										onChange={(event) =>
-											setDatasetForm({ ...datasetForm, reviewCoverage: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setDatasetForm({
+												...datasetForm,
+												reviewCoverage: event.target.value,
+											})
 										}
 									/>
 								</div>
 								<Button
 									type="submit"
 									className="w-full"
-									disabled={createDataset.isPending || requirements.length === 0}
+									disabled={
+										createDataset.isPending || requirements.length === 0
+									}
 								>
 									{createDataset.isPending ? (
 										<>
@@ -759,7 +853,9 @@ function DashboardView() {
 								<ClipboardList className="size-4 text-primary" />
 								<div>
 									<CardTitle>调度自动化任务</CardTitle>
-									<CardDescription>关联数据集，即可向后端编排系统发送任务请求。</CardDescription>
+									<CardDescription>
+										关联数据集，即可向后端编排系统发送任务请求。
+									</CardDescription>
 								</div>
 							</div>
 						</CardHeader>
@@ -768,7 +864,7 @@ function DashboardView() {
 								<Select
 									required
 									value={taskForm.datasetId}
-									onChange={(event) =>
+									onChange={(event: ChangeEvent<HTMLSelectElement>) =>
 										setTaskForm({ ...taskForm, datasetId: event.target.value })
 									}
 								>
@@ -782,7 +878,9 @@ function DashboardView() {
 								<div className="grid grid-cols-2 gap-3">
 									<Select
 										value={taskForm.type}
-										onChange={(event) => setTaskForm({ ...taskForm, type: event.target.value })}
+										onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+											setTaskForm({ ...taskForm, type: event.target.value })
+										}
 									>
 										{taskTypes.map((type) => (
 											<option key={type} value={type}>
@@ -792,7 +890,9 @@ function DashboardView() {
 									</Select>
 									<Select
 										value={taskForm.status}
-										onChange={(event) => setTaskForm({ ...taskForm, status: event.target.value })}
+										onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+											setTaskForm({ ...taskForm, status: event.target.value })
+										}
 									>
 										{taskStatusValues.map((status) => (
 											<option key={status} value={status}>
@@ -808,15 +908,18 @@ function DashboardView() {
 										max={100}
 										placeholder="初始进度 %"
 										value={taskForm.progress}
-										onChange={(event) =>
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
 											setTaskForm({ ...taskForm, progress: event.target.value })
 										}
 									/>
 									<Input
 										placeholder="负责人（可空）"
 										value={taskForm.assignedTo}
-										onChange={(event) =>
-											setTaskForm({ ...taskForm, assignedTo: event.target.value })
+										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+											setTaskForm({
+												...taskForm,
+												assignedTo: event.target.value,
+											})
 										}
 									/>
 								</div>
@@ -846,33 +949,42 @@ function DashboardView() {
 					<Card className="overflow-hidden">
 						<CardHeader>
 							<CardTitle>自动化任务队列</CardTitle>
-							<CardDescription>追踪批处理、Caption、标签与质检任务的执行状态。</CardDescription>
+							<CardDescription>
+								追踪批处理、Caption、标签与质检任务的执行状态。
+							</CardDescription>
 						</CardHeader>
 						<CardContent className="overflow-x-auto">
 							<table className="w-full min-w-[640px] text-sm">
 								<thead>
-									<tr className="text-left text-xs text-muted-foreground">
+									<tr className="text-left text-muted-foreground text-xs">
 										<th className="pb-2 font-medium">任务</th>
 										<th className="pb-2 font-medium">所属数据集</th>
 										<th className="pb-2 font-medium">状态</th>
-										<th className="pb-2 font-medium text-center">进度</th>
-										<th className="pb-2 font-medium text-right">负责人</th>
+										<th className="pb-2 text-center font-medium">进度</th>
+										<th className="pb-2 text-right font-medium">负责人</th>
 									</tr>
 								</thead>
-								<tbody className="[&_tr]:border-t [&_tr]:border-border/60">
+								<tbody className="[&_tr]:border-border/60 [&_tr]:border-t">
 									{tasks.length === 0 ? (
 										<tr>
-											<td colSpan={5} className="py-6 text-center text-muted-foreground">
+											<td
+												colSpan={5}
+												className="py-6 text-center text-muted-foreground"
+											>
 												暂无任务
 											</td>
 										</tr>
 									) : (
 										tasks.slice(0, 6).map((task) => (
 											<tr key={task.id} className="text-xs">
-												<td className="py-3 font-medium">{task.type.toUpperCase()}</td>
+												<td className="py-3 font-medium">
+													{task.type.toUpperCase()}
+												</td>
 												<td className="py-3">
 													<div className="flex flex-col">
-														<span className="font-medium">{task.dataset?.name}</span>
+														<span className="font-medium">
+															{task.dataset?.name}
+														</span>
 														<span className="text-muted-foreground">
 															{task.requirement?.title ?? "未绑定"}
 														</span>
@@ -881,10 +993,11 @@ function DashboardView() {
 												<td className="py-3">
 													<Select
 														value={task.status}
-														onChange={(event) =>
+														onChange={(event: ChangeEvent<HTMLSelectElement>) =>
 															updateTaskStatus.mutate({
 																id: task.id,
-																status: event.target.value as (typeof taskStatusValues)[number],
+																status: event.target
+																	.value as (typeof taskStatusValues)[number],
 															})
 														}
 														disabled={updateTaskStatus.isPending}
@@ -902,7 +1015,9 @@ function DashboardView() {
 														{task.progress}%
 													</p>
 												</td>
-												<td className="py-3 text-right">{task.assignedTo ?? "自动化"}</td>
+												<td className="py-3 text-right">
+													{task.assignedTo ?? "自动化"}
+												</td>
 											</tr>
 										))
 									)}
@@ -916,14 +1031,16 @@ function DashboardView() {
 							<div className="flex items-center justify-between">
 								<div>
 									<CardTitle>标签洞察</CardTitle>
-									<CardDescription>高频标签覆盖率一览，辅助调度打标任务。</CardDescription>
+									<CardDescription>
+										高频标签覆盖率一览，辅助调度打标任务。
+									</CardDescription>
 								</div>
 								<Tag className="size-4 text-primary" />
 							</div>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							{tags.length === 0 ? (
-								<p className="text-sm text-muted-foreground">暂无标签数据。</p>
+								<p className="text-muted-foreground text-sm">暂无标签数据。</p>
 							) : (
 								tags.slice(0, 6).map((tag) => (
 									<div
@@ -932,13 +1049,14 @@ function DashboardView() {
 									>
 										<div>
 											<p className="font-medium">{tag.label}</p>
-											<p className="text-xs text-muted-foreground">
-												{tag.dataset?.name} · {tag.requirement?.title ?? "未绑定"}
+											<p className="text-muted-foreground text-xs">
+												{tag.dataset?.name} ·{" "}
+												{tag.requirement?.title ?? "未绑定"}
 											</p>
 										</div>
 										<div className="text-right">
-											<p className="text-sm font-semibold">{tag.coverage}%</p>
-											<p className="text-xs text-muted-foreground">
+											<p className="font-semibold text-sm">{tag.coverage}%</p>
+											<p className="text-muted-foreground text-xs">
 												{tag.usageCount} 次引用
 											</p>
 										</div>
@@ -953,11 +1071,13 @@ function DashboardView() {
 					<Card>
 						<CardHeader>
 							<CardTitle>团队协作概览</CardTitle>
-							<CardDescription>谁在推动更多任务、哪些看板需要增援。</CardDescription>
+							<CardDescription>
+								谁在推动更多任务、哪些看板需要增援。
+							</CardDescription>
 						</CardHeader>
 						<CardContent>
 							{ownerSummary.length === 0 ? (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									暂无成员数据，先创建一个需求吧。
 								</p>
 							) : (
@@ -969,15 +1089,17 @@ function DashboardView() {
 										>
 											<div className="flex items-center justify-between">
 												<div>
-													<p className="text-sm text-muted-foreground">负责人</p>
-													<p className="text-lg font-semibold">{owner.owner}</p>
+													<p className="text-muted-foreground text-sm">
+														负责人
+													</p>
+													<p className="font-semibold text-lg">{owner.owner}</p>
 												</div>
 												<Badge variant="outline">
 													<Users2 className="mr-1 size-3.5" />
 													{owner.count}
 												</Badge>
 											</div>
-											<p className="mt-2 text-xs text-muted-foreground">
+											<p className="mt-2 text-muted-foreground text-xs">
 												当前负责 {owner.count} 个需求
 											</p>
 										</div>
@@ -1000,20 +1122,26 @@ type SummaryCardProps = {
 	highlight?: string;
 };
 
-function SummaryCard({ label, value, description, icon, highlight }: SummaryCardProps) {
+function SummaryCard({
+	label,
+	value,
+	description,
+	icon,
+	highlight,
+}: SummaryCardProps) {
 	return (
 		<Card className="bg-card">
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
 				<div>
-					<p className="text-sm text-muted-foreground">{label}</p>
-					<p className="text-2xl font-semibold">{value}</p>
+					<p className="text-muted-foreground text-sm">{label}</p>
+					<p className="font-semibold text-2xl">{value}</p>
 				</div>
 				<div className="rounded-full bg-muted/80 p-2">{icon}</div>
 			</CardHeader>
 			<CardContent>
-				<p className="text-xs text-muted-foreground">{description}</p>
+				<p className="text-muted-foreground text-xs">{description}</p>
 				{highlight ? (
-					<p className="mt-1 text-xs font-medium text-primary">{highlight}</p>
+					<p className="mt-1 font-medium text-primary text-xs">{highlight}</p>
 				) : null}
 			</CardContent>
 		</Card>

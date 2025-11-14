@@ -1,12 +1,11 @@
-import { authClient } from "@/lib/auth-client";
+import { Button, Input, Label } from "@cyop/ui";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
+import type { ChangeEvent, FormEvent } from "react";
 import { toast } from "sonner";
 import z from "zod";
+import { authClient } from "@/lib/auth-client";
 import Loader from "./loader";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 
 export default function SignInForm({
 	onSwitchToSignUp,
@@ -55,13 +54,13 @@ export default function SignInForm({
 	}
 
 	return (
-		<div className="mx-auto w-full mt-10 max-w-md p-6">
-			<h1 className="mb-6 text-center text-3xl font-bold">Welcome Back</h1>
+		<div className="mx-auto mt-10 w-full max-w-md p-6">
+			<h1 className="mb-6 text-center font-bold text-3xl">Welcome Back</h1>
 
 			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
+				onSubmit={(event: FormEvent<HTMLFormElement>) => {
+					event.preventDefault();
+					event.stopPropagation();
 					form.handleSubmit();
 				}}
 				className="space-y-4"
@@ -77,7 +76,9 @@ export default function SignInForm({
 									type="email"
 									value={field.state.value}
 									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
+									onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										field.handleChange(event.target.value)
+									}
 								/>
 								{field.state.meta.errors.map((error) => (
 									<p key={error?.message} className="text-red-500">
@@ -100,7 +101,9 @@ export default function SignInForm({
 									type="password"
 									value={field.state.value}
 									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
+									onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										field.handleChange(event.target.value)
+									}
 								/>
 								{field.state.meta.errors.map((error) => (
 									<p key={error?.message} className="text-red-500">

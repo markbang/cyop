@@ -1,6 +1,16 @@
-import { useState } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+	Input,
+	Select,
+} from "@cyop/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
 	CheckCircle2,
 	Clipboard,
@@ -9,15 +19,10 @@ import {
 	Trash2,
 	Upload,
 } from "lucide-react";
+import { type ChangeEvent, useState } from "react";
 import { toast } from "sonner";
-
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 
 type UploadEntry = {
 	id: string;
@@ -84,7 +89,9 @@ function MediaLibrary() {
 	const datasets = datasetQuery.data ?? [];
 	const assets = mediaQuery.data ?? [];
 
-	const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileChange = async (
+		event: React.ChangeEvent<HTMLInputElement>,
+	) => {
 		if (!selectedDataset) {
 			toast.error("请先选择一个数据集");
 			return;
@@ -143,12 +150,20 @@ function MediaLibrary() {
 			toast.success(`${file.name} 上传完成`);
 		} catch (error) {
 			console.error(error);
-			updateUpload(entryId, "error", error instanceof Error ? error.message : "上传失败");
+			updateUpload(
+				entryId,
+				"error",
+				error instanceof Error ? error.message : "上传失败",
+			);
 			toast.error(`${file.name} 上传失败`);
 		}
 	};
 
-	const updateUpload = (id: string, status: UploadEntry["status"], error?: string) => {
+	const updateUpload = (
+		id: string,
+		status: UploadEntry["status"],
+		error?: string,
+	) => {
 		setUploads((prev) =>
 			prev.map((upload) =>
 				upload.id === id
@@ -175,9 +190,12 @@ function MediaLibrary() {
 		<div className="h-full overflow-y-auto bg-muted/10">
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-8">
 				<section className="space-y-3">
-					<h1 className="text-3xl font-semibold tracking-tight">素材库 & 上传</h1>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						支持直接上传到 S3 兼容存储，自动记录素材与所属数据集，并提供预览与链接复制。
+					<h1 className="font-semibold text-3xl tracking-tight">
+						素材库 & 上传
+					</h1>
+					<p className="max-w-2xl text-muted-foreground text-sm">
+						支持直接上传到 S3
+						兼容存储，自动记录素材与所属数据集，并提供预览与链接复制。
 					</p>
 				</section>
 
@@ -186,14 +204,17 @@ function MediaLibrary() {
 						<CardHeader>
 							<CardTitle>上传素材</CardTitle>
 							<CardDescription>
-								选择目标数据集后将文件拖拽或点击上传，系统会自动生成 S3 签名并追踪状态。
+								选择目标数据集后将文件拖拽或点击上传，系统会自动生成 S3
+								签名并追踪状态。
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="grid gap-3 sm:grid-cols-[250px_1fr]">
 								<Select
 									value={selectedDataset}
-									onChange={(event) => setSelectedDataset(event.target.value)}
+									onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+										setSelectedDataset(event.target.value)
+									}
 								>
 									<option value="">选择数据集</option>
 									{datasets.map((dataset) => (
@@ -206,19 +227,18 @@ function MediaLibrary() {
 									disabled
 									value={
 										selectedDataset
-											? datasets.find((dataset) => dataset.id === Number(selectedDataset))
-													?.requirement?.title ?? "未关联需求"
+											? (datasets.find(
+													(dataset) => dataset.id === Number(selectedDataset),
+												)?.requirement?.title ?? "未关联需求")
 											: "选择数据集后显示需求信息"
 									}
 								/>
 							</div>
-							<label
-								className="flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border/70 bg-background text-center transition hover:border-primary"
-							>
+							<label className="flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border-2 border-border/70 border-dashed bg-background text-center transition hover:border-primary">
 								<Upload className="size-10 text-muted-foreground" />
 								<div>
-									<p className="text-lg font-medium">拖拽文件到此处</p>
-									<p className="text-sm text-muted-foreground">
+									<p className="font-medium text-lg">拖拽文件到此处</p>
+									<p className="text-muted-foreground text-sm">
 										支持图片、视频等常见素材，单次可多选上传
 									</p>
 								</div>
@@ -229,7 +249,10 @@ function MediaLibrary() {
 									onChange={handleFileChange}
 									disabled={!selectedDataset || isUploading}
 								/>
-								<Button type="button" disabled={!selectedDataset || isUploading}>
+								<Button
+									type="button"
+									disabled={!selectedDataset || isUploading}
+								>
 									选择文件
 								</Button>
 							</label>
@@ -242,7 +265,7 @@ function MediaLibrary() {
 						</CardHeader>
 						<CardContent className="space-y-3">
 							{uploads.length === 0 ? (
-								<p className="text-sm text-muted-foreground">尚无上传任务</p>
+								<p className="text-muted-foreground text-sm">尚无上传任务</p>
 							) : (
 								uploads.slice(0, 5).map((upload) => (
 									<div
@@ -250,11 +273,11 @@ function MediaLibrary() {
 										className="rounded-lg border bg-card/80 px-3 py-2 text-sm"
 									>
 										<p className="font-medium">{upload.name}</p>
-										<p className="text-xs text-muted-foreground">
+										<p className="text-muted-foreground text-xs">
 											{statusLabel(upload.status)}
 										</p>
 										{upload.error ? (
-											<p className="text-xs text-destructive">{upload.error}</p>
+											<p className="text-destructive text-xs">{upload.error}</p>
 										) : null}
 									</div>
 								))
@@ -266,15 +289,17 @@ function MediaLibrary() {
 				<section className="space-y-4">
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<div>
-							<h2 className="text-xl font-semibold">素材列表</h2>
-							<p className="text-sm text-muted-foreground">
+							<h2 className="font-semibold text-xl">素材列表</h2>
+							<p className="text-muted-foreground text-sm">
 								最近上传的素材会显示在此，包含预览、所属数据集与链接复制能力。
 							</p>
 						</div>
 						<div className="flex flex-wrap items-center gap-2">
 							<Select
 								value={filterDataset}
-								onChange={(event) => setFilterDataset(event.target.value)}
+								onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+									setFilterDataset(event.target.value)
+								}
 								className="w-48"
 							>
 								<option value="">全部数据集</option>
@@ -314,7 +339,7 @@ function MediaLibrary() {
 												<Images className="size-8" />
 											</div>
 										)}
-										<div className="absolute right-3 top-3">
+										<div className="absolute top-3 right-3">
 											<Badge variant="secondary">{asset.status}</Badge>
 										</div>
 									</div>
@@ -323,14 +348,14 @@ function MediaLibrary() {
 											<p className="font-medium" title={asset.originalName}>
 												{asset.originalName}
 											</p>
-											<span className="text-xs text-muted-foreground">
+											<span className="text-muted-foreground text-xs">
 												{formatBytes(asset.size)}
 											</span>
 										</div>
-										<p className="text-xs text-muted-foreground">
+										<p className="text-muted-foreground text-xs">
 											{asset.dataset?.name ?? "未关联数据集"}
 										</p>
-										<div className="flex items-center gap-2 text-xs text-muted-foreground">
+										<div className="flex items-center gap-2 text-muted-foreground text-xs">
 											{asset.width && asset.height ? (
 												<span>
 													{asset.width} × {asset.height}
@@ -352,7 +377,9 @@ function MediaLibrary() {
 											<Button
 												variant="destructive"
 												size="sm"
-												onClick={() => handleDelete(asset.id, asset.originalName)}
+												onClick={() =>
+													handleDelete(asset.id, asset.originalName)
+												}
 												disabled={deleteMedia.isPending}
 											>
 												<Trash2 className="mr-2 size-4" />
@@ -407,22 +434,24 @@ async function readImageDimensions(file: File) {
 	if (!file.type.startsWith("image/")) {
 		return undefined;
 	}
-	return await new Promise<{ width: number; height: number } | undefined>((resolve) => {
-		const image = new Image();
-		const url = URL.createObjectURL(file);
-		image.onload = () => {
-			resolve({
-				width: image.width,
-				height: image.height,
-			});
-			URL.revokeObjectURL(url);
-		};
-		image.onerror = () => {
-			resolve(undefined);
-			URL.revokeObjectURL(url);
-		};
-		image.src = url;
-	});
+	return await new Promise<{ width: number; height: number } | undefined>(
+		(resolve) => {
+			const image = new Image();
+			const url = URL.createObjectURL(file);
+			image.onload = () => {
+				resolve({
+					width: image.width,
+					height: image.height,
+				});
+				URL.revokeObjectURL(url);
+			};
+			image.onerror = () => {
+				resolve(undefined);
+				URL.revokeObjectURL(url);
+			};
+			image.src = url;
+		},
+	);
 }
 
 async function copyLink(url?: string | null) {

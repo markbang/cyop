@@ -9,7 +9,7 @@ import {
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { protectedProcedure, router, publicProcedure } from "../index";
+import { protectedProcedure, publicProcedure, router } from "../index";
 
 const requirementBaseInput = z.object({
 	title: z.string().min(2),
@@ -34,29 +34,31 @@ export const requirementsRouter = router({
 			.orderBy(desc(requirements.updatedAt));
 	}),
 
-	create: protectedProcedure.input(requirementBaseInput).mutation(async ({ input }) => {
-		const now = new Date();
-		const [record] = await db
-			.insert(requirements)
-			.values({
-				title: input.title,
-				description: input.description,
-				owner: input.owner,
-				team: input.team,
-				status: input.status ?? "intake",
-				priority: input.priority,
-				expectedImages: input.expectedImages,
-				aiCoverageTarget: input.aiCoverageTarget,
-				tagHints: input.tagHints,
-				briefUrl: input.briefUrl,
-				riskLevel: input.riskLevel,
-				dueDate: input.dueDate ?? null,
-				createdAt: now,
-				updatedAt: now,
-			})
-			.returning();
-		return record;
-	}),
+	create: protectedProcedure
+		.input(requirementBaseInput)
+		.mutation(async ({ input }) => {
+			const now = new Date();
+			const [record] = await db
+				.insert(requirements)
+				.values({
+					title: input.title,
+					description: input.description,
+					owner: input.owner,
+					team: input.team,
+					status: input.status ?? "intake",
+					priority: input.priority,
+					expectedImages: input.expectedImages,
+					aiCoverageTarget: input.aiCoverageTarget,
+					tagHints: input.tagHints,
+					briefUrl: input.briefUrl,
+					riskLevel: input.riskLevel,
+					dueDate: input.dueDate ?? null,
+					createdAt: now,
+					updatedAt: now,
+				})
+				.returning();
+			return record;
+		}),
 
 	updateStatus: protectedProcedure
 		.input(
@@ -100,7 +102,9 @@ export const requirementsRouter = router({
 			if (values.length === 0) {
 				return 0;
 			}
-			return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+			return Math.round(
+				values.reduce((sum, value) => sum + value, 0) / values.length,
+			);
 		};
 
 		return {
@@ -120,14 +124,17 @@ export const requirementsRouter = router({
 					automationSuccessDenominator === 0
 						? 0
 						: Math.round(
-								(automationSuccessNumerator / automationSuccessDenominator) * 100,
+								(automationSuccessNumerator / automationSuccessDenominator) *
+									100,
 							),
 				running: taskRows.filter((task) => task.status === "running").length,
 				blocked: taskRows.filter((task) => task.status === "blocked").length,
 			},
 			alerts: {
-				urgent: requirementRows.filter((req) => req.priority === "urgent").length,
-				blocked: requirementRows.filter((req) => req.status === "blocked").length,
+				urgent: requirementRows.filter((req) => req.priority === "urgent")
+					.length,
+				blocked: requirementRows.filter((req) => req.status === "blocked")
+					.length,
 			},
 		};
 	}),

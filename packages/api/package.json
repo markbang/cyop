@@ -1,37 +1,37 @@
 {
-  "name": "@cyop/api",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "default": "./dist/*.js"
-    }
-  },
-  "type": "module",
-  "scripts": {
-    "build": "tsdown",
-    "check-types": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "tsdown": "catalog:",
-    "@cyop/config": "workspace:*"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@trpc/server": "catalog:",
-    "@trpc/client": "catalog:",
-    "hono": "catalog:",
-    "drizzle-orm": "catalog:",
-    "dotenv": "catalog:",
-    "zod": "catalog:",
-    "@cyop/auth": "workspace:*",
-    "@cyop/db": "workspace:*"
-  }
+	"name": "@cyop/api",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./*": {
+			"types": "./dist/*.d.ts",
+			"default": "./dist/*.js"
+		}
+	},
+	"type": "module",
+	"scripts": {
+		"build": "tsdown",
+		"check-types": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"tsdown": "catalog:",
+		"@cyop/config": "workspace:*"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@trpc/server": "catalog:",
+		"@trpc/client": "catalog:",
+		"hono": "catalog:",
+		"drizzle-orm": "catalog:",
+		"dotenv": "catalog:",
+		"zod": "catalog:",
+		"@cyop/auth": "workspace:*",
+		"@cyop/db": "workspace:*"
+	}
 }
