@@ -1,6 +1,6 @@
 import { db } from "@cyop/db";
+import { eq } from "@cyop/db/drizzle-orm";
 import { todo } from "@cyop/db/schema/todo";
-import { eq } from "drizzle-orm";
 import z from "zod";
 import { publicProcedure, router } from "../index";
 

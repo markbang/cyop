@@ -1,4 +1,5 @@
 import { db } from "@cyop/db";
+import { and, desc, eq } from "@cyop/db/drizzle-orm";
 import {
 	datasets,
 	mediaAssets,
@@ -6,7 +7,6 @@ import {
 	requirements,
 } from "@cyop/db/schema/platform";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq } from "drizzle-orm";
 import z from "zod";
 
 import { protectedProcedure, router } from "../index";

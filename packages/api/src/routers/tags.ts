@@ -1,6 +1,6 @@
 import { db } from "@cyop/db";
+import { desc, eq } from "@cyop/db/drizzle-orm";
 import { datasets, datasetTags, requirements } from "@cyop/db/schema/platform";
-import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
 import { protectedProcedure, publicProcedure, router } from "../index";
