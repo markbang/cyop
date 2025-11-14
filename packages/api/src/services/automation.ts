@@ -1,3 +1,7 @@
+const env = ((
+	globalThis as { process?: { env?: Record<string, string | undefined> } }
+).process?.env ?? {}) as Record<string, string | undefined>;
+
 type DatasetCreatedPayload = {
 	type: "dataset.created";
 	datasetId: number;
@@ -54,7 +58,7 @@ type BaseAutomationEvent = {
 type AutomationEvent = AutomationEventPayload & BaseAutomationEvent;
 
 export async function publishAutomationEvent(event: AutomationEventPayload) {
-	const endpoint = process.env.AUTOMATION_WEBHOOK_URL;
+	const endpoint = env.AUTOMATION_WEBHOOK_URL;
 
 	if (!endpoint) {
 		return;

@@ -2,6 +2,9 @@ import { createHash, createHmac } from "node:crypto";
 
 const AWS_ALGORITHM = "AWS4-HMAC-SHA256";
 const SERVICE = "s3";
+const env = ((
+	globalThis as { process?: { env?: Record<string, string | undefined> } }
+).process?.env ?? {}) as Record<string, string | undefined>;
 
 type StorageConfig = {
 	accessKeyId: string;
@@ -32,12 +35,12 @@ function getStorageConfig(): StorageConfig {
 		return cachedConfig;
 	}
 
-	const accessKeyId = process.env.S3_ACCESS_KEY_ID;
-	const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
-	const bucket = process.env.S3_BUCKET;
-	const region = process.env.S3_REGION;
+	const accessKeyId = env.S3_ACCESS_KEY_ID;
+	const secretAccessKey = env.S3_SECRET_ACCESS_KEY;
+	const bucket = env.S3_BUCKET;
+	const region = env.S3_REGION;
 	const endpointValue =
-		process.env.S3_ENDPOINT ||
+		env.S3_ENDPOINT ||
 		(region ? `https://s3.${region}.amazonaws.com` : undefined);
 
 	if (
@@ -58,7 +61,7 @@ function getStorageConfig(): StorageConfig {
 		bucket,
 		region,
 		endpoint: normalizeEndpoint(endpointValue),
-		forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+		forcePathStyle: env.S3_FORCE_PATH_STYLE === "true",
 	};
 
 	return cachedConfig;
@@ -152,7 +155,7 @@ function resolveObjectLocation(config: StorageConfig, key: string) {
 }
 
 export function buildPublicUrl(key: string) {
-	const customBase = process.env.ASSET_PUBLIC_URL?.trim().replace(/\/$/, "");
+	const customBase = env.ASSET_PUBLIC_URL?.trim().replace(/\/$/, "");
 	if (customBase) {
 		return `${customBase}/${encodeKey(key)}`;
 	}
