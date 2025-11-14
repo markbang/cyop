@@ -1,12 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+	Progress,
+} from "@cyop/ui";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Layers, ShieldCheck, Sparkles, Users2 } from "lucide-react";
-
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+	ArrowRight,
+	Layers,
+	ShieldCheck,
+	Sparkles,
+	Users2,
+} from "lucide-react";
 import { trpc } from "@/utils/trpc";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/")({
 	component: LandingPage,
@@ -47,11 +58,12 @@ function LandingPage() {
 					<div className="space-y-6">
 						<Badge variant="outline">cyop / creative ops</Badge>
 						<div className="space-y-4">
-							<h1 className="text-4xl font-semibold leading-tight">
+							<h1 className="font-semibold text-4xl leading-tight">
 								面向 AI 时代的图像资产管理与自动化协作平台
 							</h1>
 							<p className="text-base text-muted-foreground">
-								从需求发起、图片采集、AI caption 打标到批量质检与分发，全部流程沉淀在一个一致的 UI。
+								从需求发起、图片采集、AI caption
+								打标到批量质检与分发，全部流程沉淀在一个一致的 UI。
 								通过实时指标、看板与任务调度，帮助团队快速构建可复用的数据资产。
 							</p>
 						</div>
@@ -70,28 +82,42 @@ function LandingPage() {
 					<Card className="bg-card/80 shadow-lg">
 						<CardHeader>
 							<CardTitle>实时运行脉搏</CardTitle>
-							<CardDescription>核心指标直接读取服务器状态，用于首页提醒。</CardDescription>
+							<CardDescription>
+								核心指标直接读取服务器状态，用于首页提醒。
+							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-5">
 							<div>
-								<p className="text-sm text-muted-foreground">AI Caption 覆盖率</p>
-								<p className="text-3xl font-semibold">
+								<p className="text-muted-foreground text-sm">
+									AI Caption 覆盖率
+								</p>
+								<p className="font-semibold text-3xl">
 									{stats.data ? `${stats.data.coverage.aiCaption}%` : "--"}
 								</p>
-								<Progress value={stats.data?.coverage.aiCaption ?? 0} className="mt-2" />
+								<Progress
+									value={stats.data?.coverage.aiCaption ?? 0}
+									className="mt-2"
+								/>
 							</div>
 							<div>
-								<p className="text-sm text-muted-foreground">任务成功率</p>
-								<p className="text-3xl font-semibold">
+								<p className="text-muted-foreground text-sm">任务成功率</p>
+								<p className="font-semibold text-3xl">
 									{stats.data ? `${stats.data.automation.successRate}%` : "--"}
 								</p>
-								<Progress value={stats.data?.automation.successRate ?? 0} className="mt-2" />
+								<Progress
+									value={stats.data?.automation.successRate ?? 0}
+									className="mt-2"
+								/>
 							</div>
 							<div className="flex items-center justify-between rounded-xl border bg-muted/40 p-3">
 								<div>
-									<p className="text-xs text-muted-foreground">API 状态</p>
+									<p className="text-muted-foreground text-xs">API 状态</p>
 									<p className="font-medium">
-										{health.isLoading ? "检查中..." : apiHealthy ? "在线" : "离线"}
+										{health.isLoading
+											? "检查中..."
+											: apiHealthy
+												? "在线"
+												: "离线"}
 									</p>
 								</div>
 								<span
@@ -106,8 +132,8 @@ function LandingPage() {
 
 				<section className="space-y-4">
 					<div className="space-y-2">
-						<h2 className="text-2xl font-semibold">产品亮点</h2>
-						<p className="text-sm text-muted-foreground">
+						<h2 className="font-semibold text-2xl">产品亮点</h2>
+						<p className="text-muted-foreground text-sm">
 							围绕图片生产的关键节点，cyop 提供可插拔模块，确保体验一致。
 						</p>
 					</div>

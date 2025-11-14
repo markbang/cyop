@@ -1,19 +1,18 @@
-import { Button } from "@/components/ui/button";
 import {
+	Button,
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+	Checkbox,
+	Input,
+} from "@cyop/ui";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Trash2 } from "lucide-react";
-import { useState } from "react";
-
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { trpc } from "@/utils/trpc";
-import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/todos")({
 	component: TodosRoute,
@@ -46,8 +45,8 @@ function TodosRoute() {
 		}),
 	);
 
-	const handleAddTodo = (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleAddTodo = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
 		if (newTodoText.trim()) {
 			createMutation.mutate({ text: newTodoText });
 		}
@@ -75,7 +74,9 @@ function TodosRoute() {
 					>
 						<Input
 							value={newTodoText}
-							onChange={(e) => setNewTodoText(e.target.value)}
+							onChange={(event: ChangeEvent<HTMLInputElement>) =>
+								setNewTodoText(event.target.value)
+							}
 							placeholder="Add a new task..."
 							disabled={createMutation.isPending}
 						/>

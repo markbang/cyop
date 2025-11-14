@@ -1,40 +1,40 @@
 {
-  "name": "@cyop/db",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "default": "./dist/*.js"
-    }
-  },
-  "scripts": {
-    "build": "tsdown",
-    "check-types": "tsc --noEmit",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
-  },
-  "devDependencies": {
-    "drizzle-kit": "^0.31.2",
-    "@types/ws": "^8.18.1",
-    "tsdown": "catalog:",
-    "@cyop/config": "workspace:*"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "drizzle-orm": "catalog:",
-    "@neondatabase/serverless": "^1.0.1",
-    "ws": "^8.18.3",
-    "dotenv": "catalog:",
-    "zod": "catalog:"
-  }
+	"name": "@cyop/db",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./*": {
+			"types": "./dist/*.d.ts",
+			"default": "./dist/*.js"
+		}
+	},
+	"scripts": {
+		"build": "tsdown",
+		"check-types": "tsc --noEmit",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate"
+	},
+	"devDependencies": {
+		"drizzle-kit": "^0.31.2",
+		"@types/ws": "^8.18.1",
+		"tsdown": "catalog:",
+		"@cyop/config": "workspace:*"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"drizzle-orm": "catalog:",
+		"@neondatabase/serverless": "^1.0.1",
+		"ws": "^8.18.3",
+		"dotenv": "catalog:",
+		"zod": "catalog:"
+	}
 }

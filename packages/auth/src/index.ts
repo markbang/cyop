@@ -1,7 +1,11 @@
-import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@cyop/db";
 import * as schema from "@cyop/db/schema/auth";
+import { type BetterAuthOptions, betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+
+const env = ((
+	globalThis as { process?: { env?: Record<string, string | undefined> } }
+).process?.env ?? {}) as Record<string, string | undefined>;
 
 export const auth = betterAuth<BetterAuthOptions>({
 	database: drizzleAdapter(db, {
@@ -9,7 +13,7 @@ export const auth = betterAuth<BetterAuthOptions>({
 
 		schema: schema,
 	}),
-	trustedOrigins: [process.env.CORS_ORIGIN || ""],
+	trustedOrigins: [env.CORS_ORIGIN || ""],
 	emailAndPassword: {
 		enabled: true,
 	},

@@ -13,7 +13,7 @@ export default function Header() {
 	return (
 		<header className="border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 			<div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-				<nav className="flex items-center gap-4 text-sm text-muted-foreground">
+				<nav className="flex items-center gap-4 text-muted-foreground text-sm">
 					{links.map(({ to, label }) => (
 						<Link
 							key={to}

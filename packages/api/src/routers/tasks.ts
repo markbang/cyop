@@ -1,4 +1,5 @@
 import { db } from "@cyop/db";
+import { desc, eq } from "@cyop/db/drizzle-orm";
 import {
 	automationTasks,
 	datasets,
@@ -6,10 +7,9 @@ import {
 	taskStatusValues,
 	taskTypeValues,
 } from "@cyop/db/schema/platform";
-import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { protectedProcedure, router, publicProcedure } from "../index";
+import { protectedProcedure, publicProcedure, router } from "../index";
 import { publishAutomationEvent } from "../services/automation";
 
 const taskBaseInput = z.object({
@@ -44,38 +44,42 @@ export const tasksRouter = router({
 		}));
 	}),
 
-	create: protectedProcedure.input(taskBaseInput).mutation(async ({ input }) => {
-		const now = new Date();
-		const [record] = await db
-			.insert(automationTasks)
-			.values({
-				datasetId: input.datasetId,
-				type: input.type,
-				status: input.status,
-				progress: input.progress,
-				assignedTo: input.assignedTo,
-				metadata: input.metadata,
-				createdAt: now,
-				updatedAt: now,
-				startedAt: input.status === "running" ? now : null,
-				completedAt:
-					input.status === "succeeded" || input.status === "failed" ? now : null,
-			})
-			.returning();
-		if (!record) {
-			throw new Error("Failed to create automation task");
-		}
-		await publishAutomationEvent({
-			type: "task.created",
-			taskId: record.id,
-			datasetId: record.datasetId,
-			taskType: record.type,
-			status: record.status,
-			assignedTo: record.assignedTo,
-		});
+	create: protectedProcedure
+		.input(taskBaseInput)
+		.mutation(async ({ input }) => {
+			const now = new Date();
+			const [record] = await db
+				.insert(automationTasks)
+				.values({
+					datasetId: input.datasetId,
+					type: input.type,
+					status: input.status,
+					progress: input.progress,
+					assignedTo: input.assignedTo,
+					metadata: input.metadata,
+					createdAt: now,
+					updatedAt: now,
+					startedAt: input.status === "running" ? now : null,
+					completedAt:
+						input.status === "succeeded" || input.status === "failed"
+							? now
+							: null,
+				})
+				.returning();
+			if (!record) {
+				throw new Error("Failed to create automation task");
+			}
+			await publishAutomationEvent({
+				type: "task.created",
+				taskId: record.id,
+				datasetId: record.datasetId,
+				taskType: record.type,
+				status: record.status,
+				assignedTo: record.assignedTo,
+			});
 
-		return record;
-	}),
+			return record;
+		}),
 
 	updateStatus: protectedProcedure
 		.input(

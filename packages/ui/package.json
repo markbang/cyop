@@ -1,0 +1,41 @@
+{
+	"name": "@cyop/ui",
+	"version": "0.0.1",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./styles.css": "./styles.css",
+		"./lib/*": {
+			"types": "./dist/lib/*.d.ts",
+			"default": "./dist/lib/*.js"
+		},
+		"./components/*": {
+			"types": "./dist/components/*.d.ts",
+			"default": "./dist/components/*.js"
+		}
+	},
+	"scripts": {
+		"build": "tsdown",
+		"check-types": "tsdown"
+	},
+	"devDependencies": {
+		"@cyop/config": "workspace:*",
+		"tsdown": "catalog:"
+	},
+	"dependencies": {
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-react": "catalog:",
+		"radix-ui": "^1.4.2",
+		"tailwind-merge": "^3.3.1"
+	},
+	"peerDependencies": {
+		"react": ">=18",
+		"react-dom": ">=18"
+	}
+}

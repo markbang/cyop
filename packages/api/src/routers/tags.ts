@@ -1,9 +1,9 @@
 import { db } from "@cyop/db";
-import { datasetTags, datasets, requirements } from "@cyop/db/schema/platform";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from "@cyop/db/drizzle-orm";
+import { datasets, datasetTags, requirements } from "@cyop/db/schema/platform";
 import z from "zod";
 
-import { protectedProcedure, router, publicProcedure } from "../index";
+import { protectedProcedure, publicProcedure, router } from "../index";
 
 const baseTagInput = z.object({
 	datasetId: z.number().int().positive(),

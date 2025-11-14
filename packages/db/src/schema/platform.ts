@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
 	boolean,
 	integer,
@@ -8,9 +9,13 @@ import {
 	text,
 	timestamp,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 
-export const requirementPriorityValues = ["low", "medium", "high", "urgent"] as const;
+export const requirementPriorityValues = [
+	"low",
+	"medium",
+	"high",
+	"urgent",
+] as const;
 export const requirementPriorityEnum = pgEnum(
 	"requirement_priority",
 	requirementPriorityValues,
@@ -60,10 +65,7 @@ export const requirements = pgTable("requirements", {
 	expectedImages: integer("expected_images").notNull().default(0),
 	aiCoverageTarget: integer("ai_coverage_target").notNull().default(80),
 	riskLevel: text("risk_level").notNull().default("normal"),
-	tagHints: text("tag_hints")
-		.array()
-		.notNull()
-		.default(sql`ARRAY[]::text[]`),
+	tagHints: text("tag_hints").array().notNull().default(sql`ARRAY[]::text[]`),
 	briefUrl: text("brief_url"),
 	dueDate: timestamp("due_date"),
 	metadata: jsonb("metadata")
@@ -87,10 +89,7 @@ export const datasets = pgTable("datasets", {
 	aiCaptionCoverage: integer("ai_caption_coverage").notNull().default(0),
 	autoTagCoverage: integer("auto_tag_coverage").notNull().default(0),
 	reviewCoverage: integer("review_coverage").notNull().default(0),
-	focusTags: text("focus_tags")
-		.array()
-		.notNull()
-		.default(sql`ARRAY[]::text[]`),
+	focusTags: text("focus_tags").array().notNull().default(sql`ARRAY[]::text[]`),
 	lastRunAt: timestamp("last_run_at"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),

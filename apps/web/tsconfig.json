@@ -12,7 +12,9 @@
 		"rootDirs": ["."],
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@cyop/ui": ["../../packages/ui/dist"],
+			"@cyop/ui/*": ["../../packages/ui/dist/*"]
 		}
 	}
 }
