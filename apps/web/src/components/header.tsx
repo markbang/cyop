@@ -6,6 +6,7 @@ export default function Header() {
 	const links = [
 		{ to: "/", label: "概览" },
 		{ to: "/dashboard", label: "控制塔" },
+		{ to: "/media", label: "素材库" },
 		{ to: "/todos", label: "示例 API" },
 	] as const;
 

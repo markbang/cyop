@@ -4,6 +4,7 @@ import { requirementsRouter } from "./requirements";
 import { datasetsRouter } from "./datasets";
 import { tasksRouter } from "./tasks";
 import { tagsRouter } from "./tags";
+import { mediaRouter } from "./media";
 
 export const appRouter = router({
 	healthCheck: publicProcedure.query(() => {
@@ -20,5 +21,6 @@ export const appRouter = router({
 	dataset: datasetsRouter,
 	task: tasksRouter,
 	tag: tagsRouter,
+	media: mediaRouter,
 });
 export type AppRouter = typeof appRouter;

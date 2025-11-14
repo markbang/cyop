@@ -127,3 +127,40 @@ export const datasetTags = pgTable("dataset_tags", {
 	coverage: integer("coverage").notNull().default(0),
 	lastUsedAt: timestamp("last_used_at"),
 });
+
+export const mediaStatusValues = [
+	"pending_upload",
+	"uploading",
+	"uploaded",
+	"processing",
+	"ready",
+	"failed",
+] as const;
+export const mediaStatusEnum = pgEnum("media_status", mediaStatusValues);
+
+export const mediaAssets = pgTable("media_assets", {
+	id: serial("id").primaryKey(),
+	datasetId: integer("dataset_id")
+		.notNull()
+		.references(() => datasets.id, { onDelete: "cascade" }),
+	requirementId: integer("requirement_id").references(() => requirements.id, {
+		onDelete: "set null",
+	}),
+	originalName: text("original_name").notNull(),
+	mimeType: text("mime_type").notNull(),
+	size: integer("size").notNull().default(0),
+	width: integer("width"),
+	height: integer("height"),
+	storageBucket: text("storage_bucket").notNull(),
+	storageKey: text("storage_key").notNull(),
+	publicUrl: text("public_url"),
+	checksum: text("checksum"),
+	status: mediaStatusEnum("status").notNull().default("pending_upload"),
+	uploadedAt: timestamp("uploaded_at"),
+	metadata: jsonb("metadata")
+		.$type<Record<string, unknown>>()
+		.notNull()
+		.default(sql`'{}'::jsonb`),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
