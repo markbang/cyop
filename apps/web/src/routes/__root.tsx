@@ -4,6 +4,7 @@ import {
 	createRootRouteWithContext,
 	HeadContent,
 	Outlet,
+	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Header from "@/components/header";
@@ -21,6 +22,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 	component: RootComponent,
 	head: () => ({
 		meta: [
+			{
+				charSet: "utf-8",
+			},
+			{
+				name: "viewport",
+				content: "width=device-width, initial-scale=1",
+			},
 			{
 				title: "cyop",
 			},
@@ -40,8 +48,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootComponent() {
 	return (
-		<>
-			<HeadContent />
+		<RootDocument>
 			<ThemeProvider
 				attribute="class"
 				defaultTheme="dark"
@@ -56,6 +63,20 @@ function RootComponent() {
 			</ThemeProvider>
 			<TanStackRouterDevtools position="bottom-left" />
 			<ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
-		</>
+		</RootDocument>
+	);
+}
+
+function RootDocument({ children }: { children: React.ReactNode }) {
+	return (
+		<html lang="zh-CN">
+			<head>
+				<HeadContent />
+			</head>
+			<body>
+				{children}
+				<Scripts />
+			</body>
+		</html>
 	);
 }
