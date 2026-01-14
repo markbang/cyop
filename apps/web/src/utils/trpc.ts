@@ -4,8 +4,7 @@ import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
 
-const serverUrl =
-	import.meta.env.VITE_SERVER_URL || "https://api.cyop.bangwu.top";
+const serverUrl = import.meta.env.VITE_SERVER_URL;
 
 export const queryClient = new QueryClient({
 	queryCache: new QueryCache({
