@@ -22,7 +22,11 @@
 			"!**/.expo",
 			"!**/.alchemy",
 			"!**/.svelte-kit",
-			"!**/.source"
+			"!**/.source",
+			"!**/.output",
+			"!**/.vercel",
+			"!**/.nitro",
+			"!**/node_modules"
 		]
 	},
 	"formatter": {
