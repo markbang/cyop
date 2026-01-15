@@ -163,3 +163,58 @@ export const mediaAssets = pgTable("media_assets", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const captionStatusValues = [
+	"pending",
+	"processing",
+	"completed",
+	"approved",
+	"rejected",
+] as const;
+export const captionStatusEnum = pgEnum("caption_status", captionStatusValues);
+
+export const promptTemplates = pgTable("prompt_templates", {
+	id: serial("id").primaryKey(),
+	name: text("name").notNull(),
+	description: text("description"),
+	systemPrompt: text("system_prompt").notNull(),
+	userPromptTemplate: text("user_prompt_template").notNull(),
+	model: text("model").notNull().default("gpt-4o"),
+	temperature: integer("temperature").notNull().default(70), // stored as 0-100, divide by 100 for API
+	maxTokens: integer("max_tokens").notNull().default(300),
+	isDefault: boolean("is_default").notNull().default(false),
+	isActive: boolean("is_active").notNull().default(true),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const captions = pgTable("captions", {
+	id: serial("id").primaryKey(),
+	mediaAssetId: integer("media_asset_id")
+		.notNull()
+		.references(() => mediaAssets.id, { onDelete: "cascade" }),
+	promptTemplateId: integer("prompt_template_id").references(
+		() => promptTemplates.id,
+		{ onDelete: "set null" },
+	),
+	status: captionStatusEnum("status").notNull().default("pending"),
+	aiCaption: text("ai_caption"),
+	manualCaption: text("manual_caption"),
+	finalCaption: text("final_caption"),
+	model: text("model"),
+	confidence: integer("confidence"), // 0-100 confidence score from AI
+	tokensUsed: integer("tokens_used"),
+	generatedAt: timestamp("generated_at"),
+	approvedAt: timestamp("approved_at"),
+	approvedBy: text("approved_by"),
+	rejectionReason: text("rejection_reason"),
+	reviewedBy: text("reviewed_by"),
+	reviewedAt: timestamp("reviewed_at"),
+	processingError: text("processing_error"),
+	metadata: jsonb("metadata")
+		.$type<Record<string, unknown>>()
+		.notNull()
+		.default(sql`'{}'::jsonb`),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
