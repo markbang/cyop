@@ -19,6 +19,8 @@ import {
 	ChevronRight,
 	ClipboardList,
 	Database,
+	Layers,
+	LayoutDashboard,
 	Loader2,
 	Play,
 	Plus,
@@ -70,16 +72,6 @@ const statusCopy: Record<
 	blocked: { label: "阻塞", helper: "需要支援" },
 };
 
-const priorityTone: Record<
-	string,
-	"default" | "secondary" | "warning" | "destructive"
-> = {
-	low: "secondary",
-	medium: "default",
-	high: "warning",
-	urgent: "destructive",
-};
-
 const taskTypes = ["ingest", "caption", "tag", "qa", "distribution"] as const;
 const taskStatusValues = [
 	"queued",
@@ -90,22 +82,36 @@ const taskStatusValues = [
 	"blocked",
 ] as const;
 
-const statusTone: Record<
-	string,
-	"default" | "secondary" | "success" | "warning" | "destructive"
-> = {
-	intake: "secondary",
-	design: "secondary",
-	sourcing: "default",
-	labeling: "default",
-	qa: "warning",
-	completed: "success",
-	blocked: "destructive",
-	queued: "secondary",
-	running: "default",
-	paused: "warning",
-	succeeded: "success",
-	failed: "destructive",
+const getStatusBadgeStyles = (status: string) => {
+	switch (status) {
+		case "intake":
+		case "design":
+			return "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-100";
+		case "sourcing":
+		case "labeling":
+			return "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100";
+		case "qa":
+		case "paused":
+		case "warning":
+		case "medium":
+			return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100";
+		case "completed":
+		case "succeeded":
+		case "low":
+			return "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
+		case "blocked":
+		case "failed":
+		case "urgent":
+		case "high":
+		case "destructive":
+			return "bg-red-100 text-red-700 border-red-200 hover:bg-red-100";
+		case "running":
+			return "bg-blue-50 text-blue-600 border-blue-100 animate-pulse";
+		case "queued":
+			return "bg-slate-100 text-slate-500 border-slate-200";
+		default:
+			return "bg-slate-100 text-slate-600 border-slate-200";
+	}
 };
 
 function DashboardView() {
@@ -310,384 +316,506 @@ function DashboardView() {
 	};
 
 	return (
-		<div className="h-full overflow-y-auto bg-muted/10">
-			<div className="mx-auto flex max-w-7xl flex-col gap-8 p-6">
-				<section className="space-y-4 rounded-2xl border bg-card/80 p-6 shadow-sm">
-					<div className="flex flex-wrap items-start justify-between gap-4">
-						<div className="space-y-3">
-							<Badge variant="outline">CYOP 控制塔</Badge>
-							<div>
-								<h1 className="font-semibold text-3xl tracking-tight">
-									图像生产全链路 · 实时调度面板
-								</h1>
-								<p className="mt-2 max-w-2xl text-muted-foreground text-sm">
-									集中管理需求、数据集与自动化任务，追踪 AI
-									caption、标签覆盖率和批量处理进度， 让团队成员在统一 UI
-									中协同推进。
-								</p>
-								<p className="text-muted-foreground text-xs">
-									当前用户：{session.data?.user.email ?? session.data?.user.id}
-								</p>
+		<div className="min-h-screen bg-slate-50 text-slate-900">
+			<div className="mx-auto flex max-w-[1600px] flex-col gap-8 p-6 md:p-8">
+				<section className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/80 p-6 shadow-sm backdrop-blur-xl transition-all hover:shadow-md">
+					<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-transparent opacity-50" />
+					<div className="relative z-10 flex flex-wrap items-start justify-between gap-6">
+						<div className="space-y-4">
+							<div className="flex items-center gap-3">
+								<div className="flex size-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-blue-600/20 shadow-lg">
+									<LayoutDashboard className="size-5" />
+								</div>
+								<div>
+									<h1 className="font-bold text-2xl text-slate-900 tracking-tight lg:text-3xl">
+										CYOP 控制塔
+									</h1>
+									<p className="flex items-center gap-2 text-slate-500 text-sm">
+										<span className="inline-block size-2 rounded-full bg-emerald-500" />
+										图像生产全链路 · 实时调度
+									</p>
+								</div>
 							</div>
+							<p className="max-w-2xl text-slate-600 text-sm leading-relaxed">
+								集中管理需求、数据集与自动化任务，追踪 AI
+								Caption、标签覆盖率和批量处理进度。
+							</p>
 						</div>
-						<div className="flex flex-wrap items-center gap-2">
-							<Button variant="outline" size="sm" onClick={refreshAll}>
+
+						<div className="flex flex-wrap items-center gap-3">
+							<Button
+								variant="outline"
+								onClick={refreshAll}
+								className="border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
+							>
 								{statsQuery.isRefetching ? (
-									<Loader2 className="mr-2 size-4 animate-spin" />
+									<Loader2 className="mr-2 size-4 animate-spin text-blue-600" />
 								) : (
 									<RefreshCcw className="mr-2 size-4" />
 								)}
 								刷新数据
 							</Button>
 							<Button
-								size="sm"
-								onClick={() => {
-									createPanelRef.current?.scrollIntoView({
-										behavior: "smooth",
-									});
-								}}
+								onClick={() =>
+									createPanelRef.current?.scrollIntoView({ behavior: "smooth" })
+								}
+								className="bg-blue-600 text-white shadow-blue-600/20 shadow-lg transition-all hover:bg-blue-700 hover:shadow-blue-600/30"
 							>
-								<Sparkles className="mr-2 size-4" />
+								<Plus className="mr-2 size-4" />
 								创建新需求
 							</Button>
 						</div>
 					</div>
 
-					<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+					<div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
 						<SummaryCard
 							label="活跃需求"
 							value={stats?.totals.requirements ?? 0}
 							description="覆盖所有状态"
-							icon={<Users2 className="size-5 text-primary" />}
-							highlight={`${stats?.alerts.urgent ?? 0} 个紧急`}
+							icon={<Layers className="size-5 text-blue-600" />}
+							color="blue"
 						/>
 						<SummaryCard
-							label="自动任务成功率"
+							label="紧急任务"
+							value={stats?.alerts.urgent ?? 0}
+							description="需要立即关注"
+							icon={<AlertTriangle className="size-5 text-orange-500" />}
+							color="orange"
+						/>
+						<SummaryCard
+							label="自动化成功率"
 							value={`${stats?.automation.successRate ?? 0}%`}
-							description={`${stats?.automation.running ?? 0} 运行中 / ${
-								stats?.automation.blocked ?? 0
-							} 阻塞`}
+							description={`${stats?.automation.running ?? 0} 运行中 / ${stats?.automation.blocked ?? 0} 阻塞`}
 							icon={<CheckCircle2 className="size-5 text-emerald-500" />}
+							color="emerald"
 						/>
 						<SummaryCard
-							label="平均 AI Caption 覆盖"
+							label="AI Caption"
 							value={`${stats?.coverage.aiCaption ?? 0}%`}
 							description="智能描述完成度"
-							icon={<Sparkles className="size-5 text-fuchsia-500" />}
+							icon={<Sparkles className="size-5 text-indigo-500" />}
+							color="indigo"
 						/>
 						<SummaryCard
-							label="待关注"
-							value={`${(stats?.alerts.blocked ?? 0) + (stats?.alerts.urgent ?? 0)}`}
-							description="阻塞或紧急需求"
-							icon={<AlertTriangle className="size-5 text-amber-500" />}
+							label="阻塞需求"
+							value={stats?.alerts.blocked ?? 0}
+							description="流程受阻"
+							icon={<AlertTriangle className="size-5 text-red-500" />}
+							color="red"
 						/>
 					</div>
 				</section>
 
-				<section className="space-y-4">
-					<div className="flex flex-wrap items-center justify-between gap-2">
+				<section className="space-y-6">
+					<div className="flex items-center justify-between">
 						<div>
-							<h2 className="font-semibold text-xl">需求看板</h2>
-							<p className="text-muted-foreground text-sm">
-								拖拽式布局可快速获知瓶颈，点击状态即可同步控制塔。
+							<h2 className="font-semibold text-slate-900 text-xl tracking-tight">
+								需求看板
+							</h2>
+							<p className="mt-1 text-slate-500 text-sm">
+								全流程可视化管理，拖拽式布局（待实现）可快速获知瓶颈。
 							</p>
 						</div>
 						<Button
 							variant="link"
-							className="px-0 text-primary"
+							className="text-blue-600 hover:text-blue-700"
 							onClick={refreshAll}
 						>
-							查看最新进度
+							查看最新
 							<ChevronRight className="ml-1 size-4" />
 						</Button>
 					</div>
-					<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
+
+					<div className="grid gap-4 overflow-x-auto pb-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
 						{statusOrder.map((status) => {
 							const requirementsInColumn = groupedRequirements[status] ?? [];
+							const isSpecial =
+								status === "completed" ||
+								status === "blocked" ||
+								status === "qa";
 							return (
-								<Card key={status} className="flex flex-col">
-									<CardHeader className="pb-3">
-										<div className="flex items-center justify-between">
-											<div>
-												<CardTitle className="text-base">
-													{statusCopy[status].label}
-												</CardTitle>
-												<CardDescription>
-													{statusCopy[status].helper}
-												</CardDescription>
-											</div>
-											<Badge variant={statusTone[status]}>
-												{requirementsInColumn.length}
-											</Badge>
+								<div
+									key={status}
+									className={`flex min-w-[280px] flex-col rounded-xl border p-1 ${
+										isSpecial
+											? "border-slate-200 bg-slate-50/50"
+											: "border-transparent bg-transparent"
+									}`}
+								>
+									<div className="mb-3 flex items-center justify-between px-2 pt-2">
+										<div>
+											<h3 className="font-semibold text-slate-700 text-sm">
+												{statusCopy[status].label}
+											</h3>
+											<p className="text-slate-400 text-xs">
+												{statusCopy[status].helper}
+											</p>
 										</div>
-									</CardHeader>
-									<CardContent className="flex flex-1 flex-col gap-3 overflow-y-auto">
+										<Badge
+											variant="outline"
+											className={`${getStatusBadgeStyles(status)} border px-2 py-0.5 font-mono text-xs`}
+										>
+											{requirementsInColumn.length}
+										</Badge>
+									</div>
+
+									<div className="flex flex-1 flex-col gap-3 overflow-y-auto px-1">
 										{requirementsInColumn.length === 0 ? (
-											<p className="text-muted-foreground text-sm">暂无卡片</p>
+											<div className="flex h-24 items-center justify-center rounded-lg border border-slate-200 border-dashed bg-slate-50/50">
+												<span className="text-slate-400 text-xs">空</span>
+											</div>
 										) : (
-											requirementsInColumn.map((requirement) => {
-												return (
-													<div
-														key={requirement.id}
-														className="space-y-3 rounded-xl border border-border/80 bg-card/80 p-3 shadow-xs transition hover:border-primary"
-													>
-														<div className="flex items-start justify-between gap-2">
-															<div>
-																<p className="font-medium">
-																	{requirement.title}
-																</p>
-																<p className="text-muted-foreground text-xs">
-																	{requirement.owner} · {requirement.team}
-																</p>
+											requirementsInColumn.map((requirement) => (
+												<div
+													key={requirement.id}
+													className="group relative flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+												>
+													<div className="flex items-start justify-between gap-2">
+														<div>
+															<h4 className="line-clamp-2 font-medium text-slate-900 text-sm leading-snug transition-colors group-hover:text-blue-600">
+																{requirement.title}
+															</h4>
+															<div className="mt-1 flex items-center gap-2 text-slate-500 text-xs">
+																<Users2 className="size-3" />
+																<span>{requirement.owner}</span>
+																<span className="text-slate-300">|</span>
+																<span>{requirement.team}</span>
 															</div>
+														</div>
+														{requirement.priority !== "medium" && (
 															<Badge
-																variant={priorityTone[requirement.priority]}
+																variant="outline"
+																className={`shrink-0 text-[10px] uppercase ${getStatusBadgeStyles(requirement.priority)}`}
 															>
-																{requirement.priority.toUpperCase()}
+																{requirement.priority}
 															</Badge>
-														</div>
-														<p className="line-clamp-3 text-muted-foreground text-sm">
-															{requirement.description}
-														</p>
-														<div className="flex items-center gap-2 text-muted-foreground text-xs">
-															<span>
-																目标容量 {requirement.expectedImages} 张
-															</span>
-															<span>·</span>
-															<span>
-																AI 目标 {requirement.aiCoverageTarget}%
-															</span>
-														</div>
-														<Select
-															value={requirement.status}
-															onChange={(
-																event: ChangeEvent<HTMLSelectElement>,
-															) =>
-																updateRequirementStatus.mutate({
-																	id: requirement.id,
-																	status: event.target
-																		.value as (typeof statusOrder)[number],
-																})
-															}
-															disabled={updateRequirementStatus.isPending}
-														>
-															{statusOrder.map((value) => (
-																<option key={value} value={value}>
-																	{statusCopy[value].label}
-																</option>
-															))}
-														</Select>
-														<div className="flex flex-wrap gap-1">
-															{requirement.tagHints.length > 0 ? (
-																requirement.tagHints.map((tag) => (
-																	<Badge key={tag} variant="secondary">
-																		{tag}
-																	</Badge>
-																))
-															) : (
-																<span className="text-muted-foreground text-xs">
-																	暂无标签提示
+														)}
+													</div>
+
+													<p className="line-clamp-2 text-slate-600 text-xs">
+														{requirement.description}
+													</p>
+
+													<div className="flex flex-wrap gap-1">
+														{requirement.tagHints.length > 0 ? (
+															requirement.tagHints.slice(0, 3).map((tag) => (
+																<span
+																	key={tag}
+																	className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-[10px] text-slate-600"
+																>
+																	#{tag}
 																</span>
-															)}
+															))
+														) : (
+															<span className="text-[10px] text-slate-400 italic">
+																无标签
+															</span>
+														)}
+													</div>
+
+													<div className="mt-1 grid grid-cols-2 gap-2 border-slate-100 border-t pt-2">
+														<div className="text-center">
+															<p className="font-medium font-mono text-slate-700 text-xs">
+																{requirement.expectedImages}
+															</p>
+															<p className="text-[10px] text-slate-400">
+																目标量
+															</p>
+														</div>
+														<div className="text-center">
+															<p className="font-medium font-mono text-blue-600 text-xs">
+																{requirement.aiCoverageTarget}%
+															</p>
+															<p className="text-[10px] text-slate-400">
+																AI 目标
+															</p>
 														</div>
 													</div>
-												);
-											})
+
+													<Select
+														value={requirement.status}
+														onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+															updateRequirementStatus.mutate({
+																id: requirement.id,
+																status: e.target
+																	.value as (typeof statusOrder)[number],
+															})
+														}
+														disabled={updateRequirementStatus.isPending}
+														className="mt-1 h-7 w-full border-slate-200 bg-slate-50 text-xs focus:border-blue-500 focus:ring-blue-100"
+													>
+														{statusOrder.map((val) => (
+															<option key={val} value={val}>
+																{statusCopy[val].label}
+															</option>
+														))}
+													</Select>
+												</div>
+											))
 										)}
-									</CardContent>
-								</Card>
+									</div>
+								</div>
 							);
 						})}
 					</div>
 				</section>
 
-				<section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-					<Card>
-						<CardHeader>
-							<CardTitle>数据集健康度</CardTitle>
-							<CardDescription>
-								总览 AI
-								caption、标签覆盖率与待处理容量，快速定位需提效的数据集。
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<div className="grid grid-cols-5 items-center gap-4 font-medium text-muted-foreground text-xs">
-								<span>数据集</span>
-								<span className="text-center">AI Caption</span>
-								<span className="text-center">标签</span>
-								<span className="text-center">待处理</span>
-								<span className="text-right">Bucket</span>
+				<section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+					<Card className="border-slate-200 shadow-sm">
+						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+							<div className="flex items-center gap-2">
+								<Database className="size-5 text-blue-500" />
+								<div>
+									<CardTitle className="text-base text-slate-800">
+										数据集健康度
+									</CardTitle>
+									<CardDescription className="text-slate-500 text-xs">
+										总览 AI Caption、标签覆盖率与待处理容量
+									</CardDescription>
+								</div>
 							</div>
-							<div className="space-y-3">
-								{datasets.length === 0 ? (
-									<p className="text-muted-foreground text-sm">
-										暂无数据集，先创建一个需求吧。
-									</p>
-								) : (
-									datasets.map((dataset) => {
-										const pendingRate =
-											dataset.imageCount === 0
-												? 0
-												: Math.round(
-														(dataset.pendingCount / dataset.imageCount) * 100,
-													);
-										return (
-											<div
-												key={dataset.id}
-												className="grid grid-cols-5 items-center gap-4 rounded-xl border bg-card/70 p-3 text-sm"
-											>
-												<div>
-													<p className="font-medium">{dataset.name}</p>
-													<p className="text-muted-foreground text-xs">
-														{dataset.requirement?.title ?? "未关联需求"}
-													</p>
-												</div>
-												<div>
-													<Progress value={dataset.aiCaptionCoverage} />
-													<p className="mt-1 text-center text-muted-foreground text-xs">
-														{dataset.aiCaptionCoverage}%
-													</p>
-												</div>
-												<div>
-													<Progress
-														value={dataset.autoTagCoverage}
-														className="bg-emerald-50"
-													/>
-													<p className="mt-1 text-center text-muted-foreground text-xs">
-														{dataset.autoTagCoverage}%
-													</p>
-												</div>
-												<div className="text-center text-muted-foreground text-xs">
-													{dataset.pendingCount} 张 ({pendingRate}%)
-												</div>
-												<div className="text-right font-mono text-xs">
-													{dataset.storageBucket}
-												</div>
-											</div>
-										);
-									})
-								)}
+						</CardHeader>
+						<CardContent className="p-0">
+							<div className="overflow-x-auto">
+								<table className="w-full text-left text-sm">
+									<thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+										<tr>
+											<th className="px-6 py-3 font-medium">数据集</th>
+											<th className="px-6 py-3 font-medium">进度概览</th>
+											<th className="px-6 py-3 text-center font-medium">
+												AI Caption
+											</th>
+											<th className="px-6 py-3 text-center font-medium">
+												Tags
+											</th>
+											<th className="px-6 py-3 text-right font-medium">
+												存储 Bucket
+											</th>
+										</tr>
+									</thead>
+									<tbody className="divide-y divide-slate-100">
+										{datasets.length === 0 ? (
+											<tr>
+												<td
+													colSpan={5}
+													className="py-8 text-center text-slate-500"
+												>
+													暂无数据
+												</td>
+											</tr>
+										) : (
+											datasets.map((dataset) => {
+												const pendingRate =
+													dataset.imageCount === 0
+														? 0
+														: Math.round(
+																(dataset.pendingCount / dataset.imageCount) *
+																	100,
+															);
+												return (
+													<tr
+														key={dataset.id}
+														className="group transition-colors hover:bg-slate-50/60"
+													>
+														<td className="px-6 py-4">
+															<p className="font-medium text-slate-900 transition-colors group-hover:text-blue-600">
+																{dataset.name}
+															</p>
+															<p className="text-slate-500 text-xs">
+																{dataset.requirement?.title ?? "未关联需求"}
+															</p>
+														</td>
+														<td className="px-6 py-4">
+															<div className="flex flex-col gap-1">
+																<div className="flex justify-between text-xs">
+																	<span className="text-slate-500">
+																		处理进度
+																	</span>
+																	<span className="font-medium text-slate-700">
+																		{100 - pendingRate}%
+																	</span>
+																</div>
+																<Progress
+																	value={100 - pendingRate}
+																	className="h-1.5 bg-slate-100"
+																	indicatorClassName="bg-blue-500"
+																/>
+															</div>
+														</td>
+														<td className="px-6 py-4 text-center">
+															<div className="inline-flex flex-col items-center">
+																<span className="font-medium font-mono text-slate-700">
+																	{dataset.aiCaptionCoverage}%
+																</span>
+																<Progress
+																	value={dataset.aiCaptionCoverage}
+																	className="mt-1 h-1 w-16 bg-slate-100"
+																	indicatorClassName="bg-indigo-500"
+																/>
+															</div>
+														</td>
+														<td className="px-6 py-4 text-center">
+															<div className="inline-flex flex-col items-center">
+																<span className="font-medium font-mono text-slate-700">
+																	{dataset.autoTagCoverage}%
+																</span>
+																<Progress
+																	value={dataset.autoTagCoverage}
+																	className="mt-1 h-1 w-16 bg-slate-100"
+																	indicatorClassName="bg-emerald-500"
+																/>
+															</div>
+														</td>
+														<td className="px-6 py-4 text-right font-mono text-slate-500 text-xs">
+															{dataset.storageBucket}
+														</td>
+													</tr>
+												);
+											})
+										)}
+									</tbody>
+								</table>
 							</div>
 						</CardContent>
 					</Card>
 
-					<div ref={createPanelRef}>
-						<Card>
-							<CardHeader>
-								<CardTitle>快速创建需求</CardTitle>
-								<CardDescription>
-									填写基础信息，即可同时生成需求、数据集骨架。
-								</CardDescription>
+					<div ref={createPanelRef} className="flex flex-col">
+						<Card className="flex-1 border-slate-200 shadow-sm">
+							<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+								<div className="flex items-center gap-2">
+									<Plus className="size-5 text-orange-500" />
+									<div>
+										<CardTitle className="text-base text-slate-800">
+											快速创建需求
+										</CardTitle>
+										<CardDescription className="text-slate-500 text-xs">
+											生成需求与数据集骨架
+										</CardDescription>
+									</div>
+								</div>
 							</CardHeader>
-							<CardContent>
-								<form className="space-y-3" onSubmit={handleCreateRequirement}>
-									<Input
-										required
-										placeholder="需求标题"
-										value={formState.title}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
-											setFormState({ ...formState, title: event.target.value })
-										}
-									/>
-									<Textarea
-										required
-										placeholder="需求背景、业务目标..."
-										value={formState.description}
-										onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
-											setFormState({
-												...formState,
-												description: event.target.value,
-											})
-										}
-									/>
-									<div className="grid grid-cols-2 gap-3">
+							<CardContent className="p-6">
+								<form className="space-y-4" onSubmit={handleCreateRequirement}>
+									<div className="space-y-2">
+										<Input
+											required
+											placeholder="需求标题"
+											className="border-slate-200 focus:border-blue-500 focus:ring-blue-100"
+											value={formState.title}
+											onChange={(e: ChangeEvent<HTMLInputElement>) =>
+												setFormState({ ...formState, title: e.target.value })
+											}
+										/>
+										<Textarea
+											required
+											placeholder="需求背景、业务目标..."
+											className="min-h-[80px] border-slate-200 focus:border-blue-500 focus:ring-blue-100"
+											value={formState.description}
+											onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+												setFormState({
+													...formState,
+													description: e.target.value,
+												})
+											}
+										/>
+									</div>
+
+									<div className="grid grid-cols-2 gap-4">
 										<Input
 											required
 											placeholder="Owner"
+											className="border-slate-200"
 											value={formState.owner}
-											onChange={(event: ChangeEvent<HTMLInputElement>) =>
-												setFormState({
-													...formState,
-													owner: event.target.value,
-												})
+											onChange={(e: ChangeEvent<HTMLInputElement>) =>
+												setFormState({ ...formState, owner: e.target.value })
 											}
 										/>
 										<Input
 											required
 											placeholder="团队/渠道"
+											className="border-slate-200"
 											value={formState.team}
-											onChange={(event: ChangeEvent<HTMLInputElement>) =>
-												setFormState({ ...formState, team: event.target.value })
+											onChange={(e: ChangeEvent<HTMLInputElement>) =>
+												setFormState({ ...formState, team: e.target.value })
 											}
 										/>
 									</div>
-									<div className="grid grid-cols-2 gap-3">
-										<Input
-											type="number"
-											min={0}
-											placeholder="期望图片量"
-											value={formState.expectedImages}
-											onChange={(event: ChangeEvent<HTMLInputElement>) =>
+
+									<div className="grid grid-cols-2 gap-4">
+										<div className="space-y-1">
+											<p className="text-[10px] text-slate-500 uppercase tracking-wider">
+												期望图片量
+											</p>
+											<Input
+												type="number"
+												min={0}
+												className="border-slate-200"
+												value={formState.expectedImages}
+												onChange={(e: ChangeEvent<HTMLInputElement>) =>
+													setFormState({
+														...formState,
+														expectedImages: Number(e.target.value),
+													})
+												}
+											/>
+										</div>
+										<div className="space-y-1">
+											<p className="text-[10px] text-slate-500 uppercase tracking-wider">
+												AI 覆盖目标 %
+											</p>
+											<Input
+												type="number"
+												min={0}
+												max={100}
+												className="border-slate-200"
+												value={formState.aiCoverageTarget}
+												onChange={(e: ChangeEvent<HTMLInputElement>) =>
+													setFormState({
+														...formState,
+														aiCoverageTarget: Number(e.target.value),
+													})
+												}
+											/>
+										</div>
+									</div>
+
+									<div className="space-y-2">
+										<Select
+											value={formState.priority}
+											onChange={(e: ChangeEvent<HTMLSelectElement>) =>
 												setFormState({
 													...formState,
-													expectedImages: Number(event.target.value),
+													priority: e.target.value,
 												})
 											}
-										/>
+											className="border-slate-200"
+										>
+											<option value="low">低优先级</option>
+											<option value="medium">标准</option>
+											<option value="high">高优先级</option>
+											<option value="urgent">加急</option>
+										</Select>
 										<Input
-											type="number"
-											min={0}
-											max={100}
-											placeholder="AI覆盖目标 %"
-											value={formState.aiCoverageTarget}
-											onChange={(event: ChangeEvent<HTMLInputElement>) =>
-												setFormState({
-													...formState,
-													aiCoverageTarget: Number(event.target.value),
-												})
+											placeholder="标签提示 (逗号分隔)"
+											className="border-slate-200"
+											value={formState.tagHints}
+											onChange={(e: ChangeEvent<HTMLInputElement>) =>
+												setFormState({ ...formState, tagHints: e.target.value })
 											}
 										/>
 									</div>
-									<Select
-										value={formState.priority}
-										onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-											setFormState({
-												...formState,
-												priority: event.target.value,
-											})
-										}
-									>
-										<option value="low">低优先级</option>
-										<option value="medium">标准</option>
-										<option value="high">高优先级</option>
-										<option value="urgent">加急</option>
-									</Select>
-									<Input
-										placeholder="标签提示，逗号分隔，例如：电商, 宠物, 室外"
-										value={formState.tagHints}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
-											setFormState({
-												...formState,
-												tagHints: event.target.value,
-											})
-										}
-									/>
+
 									<Button
 										type="submit"
-										className="w-full"
 										disabled={createRequirement.isPending}
+										className="w-full bg-slate-900 text-white hover:bg-slate-800"
 									>
 										{createRequirement.isPending ? (
-											<>
-												<Loader2 className="mr-2 size-4 animate-spin" />
-												创建中
-											</>
+											<Loader2 className="mr-2 size-4 animate-spin" />
 										) : (
-											<>
-												<Plus className="mr-2 size-4" />
-												创建需求
-											</>
+											<Plus className="mr-2 size-4" />
 										)}
+										创建需求
 									</Button>
 								</form>
 							</CardContent>
@@ -695,90 +823,97 @@ function DashboardView() {
 					</div>
 				</section>
 
-				<section className="grid gap-6 lg:grid-cols-2">
-					<Card>
-						<CardHeader>
+				<section className="grid gap-8 lg:grid-cols-2">
+					<Card className="border-slate-200 shadow-sm">
+						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
 							<div className="flex items-center gap-2">
-								<Database className="size-4 text-primary" />
+								<Database className="size-5 text-indigo-500" />
 								<div>
-									<CardTitle>创建数据集</CardTitle>
-									<CardDescription>
-										绑定需求即可派发 bucket、覆盖目标与关注标签。
+									<CardTitle className="text-base text-slate-800">
+										创建数据集
+									</CardTitle>
+									<CardDescription className="text-slate-500 text-xs">
+										绑定需求，配置存储与目标
 									</CardDescription>
 								</div>
 							</div>
 						</CardHeader>
-						<CardContent>
-							<form className="space-y-3" onSubmit={handleCreateDataset}>
-								<Select
-									required
-									value={datasetForm.requirementId}
-									onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-										setDatasetForm({
-											...datasetForm,
-											requirementId: event.target.value,
-										})
-									}
-								>
-									<option value="">选择需求</option>
-									{requirements.map((requirement) => (
-										<option key={requirement.id} value={requirement.id}>
-											{requirement.title}
-										</option>
-									))}
-								</Select>
+						<CardContent className="p-6">
+							<form className="space-y-4" onSubmit={handleCreateDataset}>
+								<div className="grid gap-4 sm:grid-cols-2">
+									<Select
+										required
+										value={datasetForm.requirementId}
+										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+											setDatasetForm({
+												...datasetForm,
+												requirementId: e.target.value,
+											})
+										}
+										className="border-slate-200"
+									>
+										<option value="">选择关联需求...</option>
+										{requirements.map((req) => (
+											<option key={req.id} value={req.id}>
+												{req.title}
+											</option>
+										))}
+									</Select>
+									<Input
+										required
+										placeholder="数据集名称"
+										className="border-slate-200"
+										value={datasetForm.name}
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
+											setDatasetForm({ ...datasetForm, name: e.target.value })
+										}
+									/>
+								</div>
 								<Input
 									required
-									placeholder="数据集名称"
-									value={datasetForm.name}
-									onChange={(event: ChangeEvent<HTMLInputElement>) =>
-										setDatasetForm({ ...datasetForm, name: event.target.value })
-									}
-								/>
-								<Input
-									required
-									placeholder="存储 Bucket"
+									placeholder="存储 Bucket (s3://...)"
+									className="border-slate-200 font-mono text-sm"
 									value={datasetForm.storageBucket}
-									onChange={(event: ChangeEvent<HTMLInputElement>) =>
+									onChange={(e: ChangeEvent<HTMLInputElement>) =>
 										setDatasetForm({
 											...datasetForm,
-											storageBucket: event.target.value,
+											storageBucket: e.target.value,
 										})
 									}
 								/>
 								<div className="grid grid-cols-3 gap-3">
 									<Input
 										type="number"
-										min={0}
 										placeholder="总数"
+										className="border-slate-200"
 										value={datasetForm.imageCount}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											setDatasetForm({
 												...datasetForm,
-												imageCount: event.target.value,
+												imageCount: e.target.value,
 											})
 										}
 									/>
 									<Input
 										type="number"
-										min={0}
 										placeholder="已处理"
+										className="border-slate-200"
 										value={datasetForm.processedCount}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											setDatasetForm({
 												...datasetForm,
-												processedCount: event.target.value,
+												processedCount: e.target.value,
 											})
 										}
 									/>
 									<Input
-										type="text"
-										placeholder="关注标签：美妆, 室外"
+										placeholder="关注标签"
+										className="border-slate-200"
 										value={datasetForm.focusTags}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											setDatasetForm({
 												...datasetForm,
-												focusTags: event.target.value,
+												focusTags: e.target.value,
 											})
 										}
 									/>
@@ -786,278 +921,296 @@ function DashboardView() {
 								<div className="grid grid-cols-3 gap-3">
 									<Input
 										type="number"
-										min={0}
-										max={100}
-										placeholder="Caption%"
+										placeholder="Cap %"
+										className="border-slate-200"
 										value={datasetForm.aiCaptionCoverage}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											setDatasetForm({
 												...datasetForm,
-												aiCaptionCoverage: event.target.value,
+												aiCaptionCoverage: e.target.value,
 											})
 										}
 									/>
 									<Input
 										type="number"
-										min={0}
-										max={100}
-										placeholder="标签%"
+										placeholder="Tag %"
+										className="border-slate-200"
 										value={datasetForm.autoTagCoverage}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											setDatasetForm({
 												...datasetForm,
-												autoTagCoverage: event.target.value,
+												autoTagCoverage: e.target.value,
 											})
 										}
 									/>
 									<Input
 										type="number"
-										min={0}
-										max={100}
-										placeholder="Review%"
+										placeholder="Rev %"
+										className="border-slate-200"
 										value={datasetForm.reviewCoverage}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											setDatasetForm({
 												...datasetForm,
-												reviewCoverage: event.target.value,
+												reviewCoverage: e.target.value,
 											})
 										}
 									/>
 								</div>
 								<Button
 									type="submit"
-									className="w-full"
+									className="w-full bg-indigo-600 text-white hover:bg-indigo-700"
 									disabled={
 										createDataset.isPending || requirements.length === 0
 									}
 								>
 									{createDataset.isPending ? (
-										<>
-											<Loader2 className="mr-2 size-4 animate-spin" />
-											创建中
-										</>
+										<Loader2 className="mr-2 size-4 animate-spin" />
 									) : (
-										<>
-											<Plus className="mr-2 size-4" />
-											创建数据集
-										</>
+										<Plus className="mr-2 size-4" />
 									)}
+									创建数据集
 								</Button>
 							</form>
 						</CardContent>
 					</Card>
 
-					<Card>
-						<CardHeader>
+					<Card className="border-slate-200 shadow-sm">
+						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
 							<div className="flex items-center gap-2">
-								<ClipboardList className="size-4 text-primary" />
+								<ClipboardList className="size-5 text-emerald-500" />
 								<div>
-									<CardTitle>调度自动化任务</CardTitle>
-									<CardDescription>
-										关联数据集，即可向后端编排系统发送任务请求。
+									<CardTitle className="text-base text-slate-800">
+										调度任务
+									</CardTitle>
+									<CardDescription className="text-slate-500 text-xs">
+										发送请求至后端编排系统
 									</CardDescription>
 								</div>
 							</div>
 						</CardHeader>
-						<CardContent>
-							<form className="space-y-3" onSubmit={handleCreateTask}>
+						<CardContent className="p-6">
+							<form className="space-y-4" onSubmit={handleCreateTask}>
 								<Select
 									required
 									value={taskForm.datasetId}
-									onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-										setTaskForm({ ...taskForm, datasetId: event.target.value })
+									onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+										setTaskForm({ ...taskForm, datasetId: e.target.value })
 									}
+									className="border-slate-200"
 								>
-									<option value="">选择数据集</option>
-									{datasets.map((dataset) => (
-										<option key={dataset.id} value={dataset.id}>
-											{dataset.name}
+									<option value="">选择数据集...</option>
+									{datasets.map((ds) => (
+										<option key={ds.id} value={ds.id}>
+											{ds.name}
 										</option>
 									))}
 								</Select>
-								<div className="grid grid-cols-2 gap-3">
+
+								<div className="grid grid-cols-2 gap-4">
 									<Select
 										value={taskForm.type}
-										onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-											setTaskForm({ ...taskForm, type: event.target.value })
+										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+											setTaskForm({ ...taskForm, type: e.target.value })
 										}
+										className="border-slate-200"
 									>
-										{taskTypes.map((type) => (
-											<option key={type} value={type}>
-												{type.toUpperCase()}
+										{taskTypes.map((t) => (
+											<option key={t} value={t}>
+												{t.toUpperCase()}
 											</option>
 										))}
 									</Select>
 									<Select
 										value={taskForm.status}
-										onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-											setTaskForm({ ...taskForm, status: event.target.value })
+										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+											setTaskForm({ ...taskForm, status: e.target.value })
 										}
+										className="border-slate-200"
 									>
-										{taskStatusValues.map((status) => (
-											<option key={status} value={status}>
-												{status.toUpperCase()}
+										{taskStatusValues.map((s) => (
+											<option key={s} value={s}>
+												{s.toUpperCase()}
 											</option>
 										))}
 									</Select>
 								</div>
-								<div className="grid grid-cols-[1fr_auto] gap-3">
+
+								<div className="grid grid-cols-[1fr_auto] gap-4">
 									<Input
 										type="number"
 										min={0}
 										max={100}
-										placeholder="初始进度 %"
+										placeholder="进度 %"
+										className="border-slate-200"
 										value={taskForm.progress}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
-											setTaskForm({ ...taskForm, progress: event.target.value })
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
+											setTaskForm({ ...taskForm, progress: e.target.value })
 										}
 									/>
 									<Input
-										placeholder="负责人（可空）"
+										placeholder="负责人"
+										className="w-32 border-slate-200"
 										value={taskForm.assignedTo}
-										onChange={(event: ChangeEvent<HTMLInputElement>) =>
-											setTaskForm({
-												...taskForm,
-												assignedTo: event.target.value,
-											})
+										onChange={(e: ChangeEvent<HTMLInputElement>) =>
+											setTaskForm({ ...taskForm, assignedTo: e.target.value })
 										}
 									/>
 								</div>
+
 								<Button
 									type="submit"
-									className="w-full"
+									className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
 									disabled={createTask.isPending || datasets.length === 0}
 								>
 									{createTask.isPending ? (
-										<>
-											<Loader2 className="mr-2 size-4 animate-spin" />
-											提交中
-										</>
+										<Loader2 className="mr-2 size-4 animate-spin" />
 									) : (
-										<>
-											<Play className="mr-2 size-4" />
-											调度任务
-										</>
+										<Play className="mr-2 size-4" />
 									)}
+									立即调度
 								</Button>
 							</form>
 						</CardContent>
 					</Card>
 				</section>
 
-				<section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-					<Card className="overflow-hidden">
-						<CardHeader>
-							<CardTitle>自动化任务队列</CardTitle>
-							<CardDescription>
-								追踪批处理、Caption、标签与质检任务的执行状态。
-							</CardDescription>
+				<section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+					<Card className="overflow-hidden border-slate-200 shadow-sm">
+						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+							<CardTitle className="text-base text-slate-800">
+								自动化任务队列
+							</CardTitle>
 						</CardHeader>
-						<CardContent className="overflow-x-auto">
-							<table className="w-full min-w-[640px] text-sm">
-								<thead>
-									<tr className="text-left text-muted-foreground text-xs">
-										<th className="pb-2 font-medium">任务</th>
-										<th className="pb-2 font-medium">所属数据集</th>
-										<th className="pb-2 font-medium">状态</th>
-										<th className="pb-2 text-center font-medium">进度</th>
-										<th className="pb-2 text-right font-medium">负责人</th>
-									</tr>
-								</thead>
-								<tbody className="[&_tr]:border-border/60 [&_tr]:border-t">
-									{tasks.length === 0 ? (
+						<CardContent className="p-0">
+							<div className="overflow-x-auto">
+								<table className="w-full text-left text-sm">
+									<thead className="bg-slate-50 text-slate-500 text-xs uppercase">
 										<tr>
-											<td
-												colSpan={5}
-												className="py-6 text-center text-muted-foreground"
-											>
-												暂无任务
-											</td>
+											<th className="px-6 py-3 font-medium">任务类型</th>
+											<th className="px-6 py-3 font-medium">数据集</th>
+											<th className="px-6 py-3 font-medium">状态</th>
+											<th className="px-6 py-3 text-center font-medium">
+												进度
+											</th>
+											<th className="px-6 py-3 text-right font-medium">
+												负责人
+											</th>
 										</tr>
-									) : (
-										tasks.slice(0, 6).map((task) => (
-											<tr key={task.id} className="text-xs">
-												<td className="py-3 font-medium">
-													{task.type.toUpperCase()}
-												</td>
-												<td className="py-3">
-													<div className="flex flex-col">
-														<span className="font-medium">
-															{task.dataset?.name}
-														</span>
-														<span className="text-muted-foreground">
-															{task.requirement?.title ?? "未绑定"}
-														</span>
-													</div>
-												</td>
-												<td className="py-3">
-													<Select
-														value={task.status}
-														onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-															updateTaskStatus.mutate({
-																id: task.id,
-																status: event.target
-																	.value as (typeof taskStatusValues)[number],
-															})
-														}
-														disabled={updateTaskStatus.isPending}
-													>
-														{taskStatusValues.map((status) => (
-															<option key={status} value={status}>
-																{status}
-															</option>
-														))}
-													</Select>
-												</td>
-												<td className="py-3">
-													<Progress value={task.progress} className="h-1.5" />
-													<p className="mt-1 text-center text-muted-foreground">
-														{task.progress}%
-													</p>
-												</td>
-												<td className="py-3 text-right">
-													{task.assignedTo ?? "自动化"}
+									</thead>
+									<tbody className="divide-y divide-slate-100">
+										{tasks.length === 0 ? (
+											<tr>
+												<td
+													colSpan={5}
+													className="py-8 text-center text-slate-500"
+												>
+													暂无任务
 												</td>
 											</tr>
-										))
-									)}
-								</tbody>
-							</table>
+										) : (
+											tasks.slice(0, 8).map((task) => (
+												<tr
+													key={task.id}
+													className="transition-colors hover:bg-slate-50/60"
+												>
+													<td className="px-6 py-3 font-medium text-slate-800">
+														{task.type.toUpperCase()}
+													</td>
+													<td className="px-6 py-3">
+														<div className="flex flex-col">
+															<span className="font-medium text-slate-700 text-xs">
+																{task.dataset?.name}
+															</span>
+															<span className="text-[10px] text-slate-400">
+																{task.requirement?.title ?? "-"}
+															</span>
+														</div>
+													</td>
+													<td className="px-6 py-3">
+														<Select
+															value={task.status}
+															onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+																updateTaskStatus.mutate({
+																	id: task.id,
+																	status: e.target
+																		.value as (typeof taskStatusValues)[number],
+																})
+															}
+															disabled={updateTaskStatus.isPending}
+															className="h-8 border-slate-200 text-xs"
+														>
+															{taskStatusValues.map((s) => (
+																<option key={s} value={s}>
+																	{s}
+																</option>
+															))}
+														</Select>
+													</td>
+													<td className="px-6 py-3">
+														<div className="flex items-center gap-2">
+															<Progress
+																value={task.progress}
+																className="h-1.5 flex-1 bg-slate-100"
+																indicatorClassName={
+																	task.status === "failed"
+																		? "bg-red-500"
+																		: task.status === "succeeded"
+																			? "bg-emerald-500"
+																			: "bg-blue-500"
+																}
+															/>
+															<span className="w-8 text-right font-mono text-slate-500 text-xs">
+																{task.progress}%
+															</span>
+														</div>
+													</td>
+													<td className="px-6 py-3 text-right text-slate-600 text-xs">
+														{task.assignedTo ?? "System"}
+													</td>
+												</tr>
+											))
+										)}
+									</tbody>
+								</table>
+							</div>
 						</CardContent>
 					</Card>
 
-					<Card>
-						<CardHeader>
+					<Card className="border-slate-200 shadow-sm">
+						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
 							<div className="flex items-center justify-between">
-								<div>
-									<CardTitle>标签洞察</CardTitle>
-									<CardDescription>
-										高频标签覆盖率一览，辅助调度打标任务。
-									</CardDescription>
-								</div>
-								<Tag className="size-4 text-primary" />
+								<CardTitle className="text-base text-slate-800">
+									标签洞察
+								</CardTitle>
+								<Tag className="size-4 text-slate-400" />
 							</div>
 						</CardHeader>
-						<CardContent className="space-y-4">
+						<CardContent className="space-y-3 p-6">
 							{tags.length === 0 ? (
-								<p className="text-muted-foreground text-sm">暂无标签数据。</p>
+								<p className="text-center text-slate-500 text-sm">暂无数据</p>
 							) : (
 								tags.slice(0, 6).map((tag) => (
 									<div
 										key={tag.id}
-										className="flex items-center justify-between rounded-xl border bg-card/70 p-3"
+										className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 p-3 transition-colors hover:border-slate-200 hover:bg-white"
 									>
 										<div>
-											<p className="font-medium">{tag.label}</p>
-											<p className="text-muted-foreground text-xs">
-												{tag.dataset?.name} ·{" "}
-												{tag.requirement?.title ?? "未绑定"}
+											<p className="font-medium text-slate-700 text-sm">
+												#{tag.label}
+											</p>
+											<p className="line-clamp-1 max-w-[120px] text-slate-400 text-xs">
+												{tag.dataset?.name}
 											</p>
 										</div>
 										<div className="text-right">
-											<p className="font-semibold text-sm">{tag.coverage}%</p>
-											<p className="text-muted-foreground text-xs">
-												{tag.usageCount} 次引用
+											<Badge
+												variant="secondary"
+												className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+											>
+												{tag.coverage}%
+											</Badge>
+											<p className="mt-1 text-[10px] text-slate-400">
+												{tag.usageCount} 次
 											</p>
 										</div>
 									</div>
@@ -1068,46 +1221,36 @@ function DashboardView() {
 				</section>
 
 				<section>
-					<Card>
-						<CardHeader>
-							<CardTitle>团队协作概览</CardTitle>
-							<CardDescription>
-								谁在推动更多任务、哪些看板需要增援。
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							{ownerSummary.length === 0 ? (
-								<p className="text-muted-foreground text-sm">
-									暂无成员数据，先创建一个需求吧。
-								</p>
-							) : (
-								<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-									{ownerSummary.map((owner) => (
-										<div
-											key={owner.owner}
-											className="rounded-xl border bg-card/60 p-4 shadow-xs"
-										>
-											<div className="flex items-center justify-between">
-												<div>
-													<p className="text-muted-foreground text-sm">
-														负责人
-													</p>
-													<p className="font-semibold text-lg">{owner.owner}</p>
-												</div>
-												<Badge variant="outline">
-													<Users2 className="mr-1 size-3.5" />
-													{owner.count}
-												</Badge>
-											</div>
-											<p className="mt-2 text-muted-foreground text-xs">
-												当前负责 {owner.count} 个需求
-											</p>
-										</div>
-									))}
+					<div className="mb-4 flex items-center gap-2">
+						<Users2 className="size-5 text-slate-400" />
+						<h2 className="font-semibold text-lg text-slate-800">团队概览</h2>
+					</div>
+					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+						{ownerSummary.length === 0 ? (
+							<div className="col-span-full rounded-lg border border-slate-200 border-dashed p-8 text-center text-slate-500">
+								暂无成员数据
+							</div>
+						) : (
+							ownerSummary.map((owner) => (
+								<div
+									key={owner.owner}
+									className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
+								>
+									<div>
+										<p className="text-slate-500 text-xs">负责人</p>
+										<p className="font-semibold text-lg text-slate-900">
+											{owner.owner}
+										</p>
+									</div>
+									<div className="flex flex-col items-end">
+										<Badge className="bg-slate-900 text-white hover:bg-slate-800">
+											{owner.count} 需求
+										</Badge>
+									</div>
 								</div>
-							)}
-						</CardContent>
-					</Card>
+							))
+						)}
+					</div>
 				</section>
 			</div>
 		</div>
@@ -1119,7 +1262,7 @@ type SummaryCardProps = {
 	value: string | number;
 	description: string;
 	icon: ReactNode;
-	highlight?: string;
+	color: "blue" | "orange" | "emerald" | "indigo" | "red";
 };
 
 function SummaryCard({
@@ -1127,22 +1270,37 @@ function SummaryCard({
 	value,
 	description,
 	icon,
-	highlight,
+	color,
 }: SummaryCardProps) {
+	const colorStyles = {
+		blue: "bg-blue-50 text-blue-600 border-blue-100",
+		orange: "bg-orange-50 text-orange-600 border-orange-100",
+		emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+		indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
+		red: "bg-red-50 text-red-600 border-red-100",
+	};
+
 	return (
-		<Card className="bg-card">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-				<div>
-					<p className="text-muted-foreground text-sm">{label}</p>
-					<p className="font-semibold text-2xl">{value}</p>
+		<Card className="group relative overflow-hidden border-slate-200 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+			<CardContent className="p-5">
+				<div className="flex items-start justify-between">
+					<div className="space-y-1">
+						<p className="font-medium text-slate-500 text-xs uppercase tracking-wider">
+							{label}
+						</p>
+						<p className="font-bold text-2xl text-slate-900 tracking-tight">
+							{value}
+						</p>
+					</div>
+					<div
+						className={`rounded-xl border p-2.5 transition-colors group-hover:scale-110 ${colorStyles[color]}`}
+					>
+						{icon}
+					</div>
 				</div>
-				<div className="rounded-full bg-muted/80 p-2">{icon}</div>
-			</CardHeader>
-			<CardContent>
-				<p className="text-muted-foreground text-xs">{description}</p>
-				{highlight ? (
-					<p className="mt-1 font-medium text-primary text-xs">{highlight}</p>
-				) : null}
+				<div className="mt-4 flex items-center text-slate-400 text-xs">
+					{description}
+				</div>
 			</CardContent>
 		</Card>
 	);

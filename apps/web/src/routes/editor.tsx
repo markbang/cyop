@@ -1,14 +1,4 @@
-import {
-	Badge,
-	Button,
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-	Select,
-	Textarea,
-} from "@cyop/ui";
+import { Badge, Button, Select, Textarea } from "@cyop/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
@@ -43,17 +33,6 @@ export const Route = createFileRoute("/editor")({
 	},
 	component: EditorView,
 });
-
-const statusColors: Record<
-	string,
-	"default" | "secondary" | "success" | "warning" | "destructive" | "outline"
-> = {
-	pending: "secondary",
-	processing: "default",
-	completed: "warning",
-	approved: "success",
-	rejected: "destructive",
-};
 
 const statusLabels: Record<string, string> = {
 	pending: "待处理",
@@ -257,114 +236,124 @@ function EditorView() {
 	};
 
 	return (
-		<div className="flex h-[calc(100vh-theme(spacing.16))] flex-col bg-muted/10">
-			<header className="border-b bg-card/80 px-6 py-4 shadow-sm backdrop-blur-sm">
-				<div className="flex flex-wrap items-center justify-between gap-4">
-					<div>
-						<h1 className="font-semibold text-2xl tracking-tight">
+		<div className="flex h-screen w-full flex-col bg-slate-50 font-sans text-slate-800">
+			<header className="sticky top-4 z-50 mx-4 mb-4 rounded-2xl border border-slate-200 bg-white/90 px-6 py-4 shadow-sm backdrop-blur-xl transition-all">
+				<div className="flex flex-wrap items-center justify-between gap-6">
+					<div className="flex flex-col gap-1">
+						<h1 className="font-semibold text-2xl text-slate-900 tracking-tight">
 							Caption 审核台
 						</h1>
-						<p className="text-muted-foreground text-sm">
-							高效浏览、编辑与验收 AI 生成的图像描述。
+						<p className="text-slate-500 text-sm">
+							高效浏览、编辑与验收 AI 生成的图像描述
 						</p>
 					</div>
 
-					<div className="flex items-center gap-3">
-						<Select
-							value={datasetId}
-							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-								setDatasetId(e.target.value)
-							}
-						>
-							<option value="">所有数据集</option>
-							{datasetsQuery.data?.map((ds) => (
-								<option key={ds.id} value={ds.id}>
-									{ds.name}
-								</option>
-							))}
-						</Select>
-
-						<Select
-							value={statusFilter}
-							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-								setStatusFilter(e.target.value)
-							}
-						>
-							<option value="">所有状态</option>
-							{Object.entries(statusLabels).map(([key, label]) => (
-								<option key={key} value={key}>
-									{label}
-								</option>
-							))}
-						</Select>
-
-						<div className="h-8 w-px bg-border" />
-
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => {
-								captionsQuery.refetch();
-								statsQuery.refetch();
-							}}
-						>
-							{captionsQuery.isFetching ? (
-								<Loader2 className="mr-2 size-4 animate-spin" />
-							) : (
-								<RotateCcw className="mr-2 size-4" />
-							)}
-							刷新
-						</Button>
-
-						<Button
-							size="sm"
-							variant="secondary"
-							onClick={handleBatchApprove}
-							disabled={batchApproveMutation.isPending}
-						>
-							<CheckCircle2 className="mr-2 size-4 text-emerald-600" />
-							批量通过当前页
-						</Button>
-
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={handleBatchRegenerate}
-							disabled={
-								regenerateMutation.isPending ||
-								captions.filter((c) => c.status === "rejected").length === 0
-							}
-						>
-							{regenerateMutation.isPending ? (
-								<Loader2 className="mr-2 size-4 animate-spin" />
-							) : (
-								<RefreshCw className="mr-2 size-4" />
-							)}
-							重新生成已驳回
-						</Button>
-
-						<div className="relative">
+					<div className="flex flex-1 items-center justify-end gap-3">
+						<div className="flex items-center gap-2">
 							<Select
-								value=""
-								onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-									const format = e.target.value as "json" | "csv" | "txt";
-									if (format) handleExport(format);
-								}}
-								disabled={isExporting}
+								value={datasetId}
+								onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+									setDatasetId(e.target.value)
+								}
+								className="h-9 w-[180px] border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-100"
 							>
-								<option value="" disabled>
-									{isExporting ? "导出中..." : "导出"}
-								</option>
-								<option value="json">JSON</option>
-								<option value="csv">CSV</option>
-								<option value="txt">TXT</option>
+								<option value="">所有数据集</option>
+								{datasetsQuery.data?.map((ds) => (
+									<option key={ds.id} value={ds.id}>
+										{ds.name}
+									</option>
+								))}
 							</Select>
-							<Download className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+
+							<Select
+								value={statusFilter}
+								onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+									setStatusFilter(e.target.value)
+								}
+								className="h-9 w-[140px] border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-100"
+							>
+								<option value="">所有状态</option>
+								{Object.entries(statusLabels).map(([key, label]) => (
+									<option key={key} value={key}>
+										{label}
+									</option>
+								))}
+							</Select>
+						</div>
+
+						<div className="h-6 w-px bg-slate-200" />
+
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => {
+									captionsQuery.refetch();
+									statsQuery.refetch();
+								}}
+								className="h-9 border-slate-200 text-slate-600 hover:bg-slate-50"
+							>
+								{captionsQuery.isFetching ? (
+									<Loader2 className="mr-2 size-4 animate-spin" />
+								) : (
+									<RotateCcw className="mr-2 size-4" />
+								)}
+								刷新
+							</Button>
+
+							<Button
+								size="sm"
+								variant="secondary"
+								onClick={handleBatchApprove}
+								disabled={batchApproveMutation.isPending}
+								className="h-9 bg-blue-50 text-blue-700 hover:bg-blue-100"
+							>
+								<CheckCircle2 className="mr-2 size-4 text-blue-600" />
+								批量通过
+							</Button>
+
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={handleBatchRegenerate}
+								disabled={
+									regenerateMutation.isPending ||
+									captions.filter((c) => c.status === "rejected").length === 0
+								}
+								className="h-9 border-slate-200 text-slate-600 hover:bg-slate-50"
+							>
+								{regenerateMutation.isPending ? (
+									<Loader2 className="mr-2 size-4 animate-spin" />
+								) : (
+									<RefreshCw className="mr-2 size-4" />
+								)}
+								重试驳回
+							</Button>
+
+							<div className="relative">
+								<Select
+									value=""
+									onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+										const format = e.target.value as "json" | "csv" | "txt";
+										if (format) handleExport(format);
+									}}
+									disabled={isExporting}
+									className="h-9 w-[100px] border-slate-200 bg-white pl-9 text-sm"
+								>
+									<option value="" disabled>
+										{isExporting ? "..." : "导出"}
+									</option>
+									<option value="json">JSON</option>
+									<option value="csv">CSV</option>
+									<option value="txt">TXT</option>
+								</Select>
+								<Download className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<div className="mt-6 flex gap-6 overflow-x-auto pb-2">
+				<div className="mt-6 flex items-center gap-4 border-slate-100 border-t pt-4">
 					<StatBadge
 						label="待审核"
 						count={statsQuery.data?.completed ?? 0}
@@ -385,19 +374,20 @@ function EditorView() {
 						count={statsQuery.data?.processing ?? 0}
 						color="default"
 					/>
-					<div className="ml-auto flex items-center gap-2 text-muted-foreground text-sm">
+					<div className="ml-auto flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600 text-xs">
 						<span>总计: {statsQuery.data?.total ?? 0}</span>
 					</div>
 				</div>
 			</header>
 
-			<div className="flex flex-1 overflow-hidden">
-				<div className="w-80 flex-none overflow-y-auto border-r bg-background/50">
-					<div className="p-4">
+			<main className="flex flex-1 gap-6 overflow-hidden px-4 pb-4">
+				<aside className="flex w-80 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+					<div className="flex-1 overflow-y-auto p-3">
 						<div className="space-y-2">
 							{captions.length === 0 ? (
-								<div className="py-8 text-center text-muted-foreground text-sm">
-									没有找到相关 Caption
+								<div className="flex h-40 flex-col items-center justify-center gap-2 text-slate-400">
+									<Filter className="size-8 opacity-20" />
+									<span className="text-sm">没有找到相关条目</span>
 								</div>
 							) : (
 								captions.map((caption) => (
@@ -405,105 +395,104 @@ function EditorView() {
 										type="button"
 										key={caption.id}
 										onClick={() => setSelectedId(caption.id)}
-										className={`group flex w-full cursor-pointer gap-3 rounded-lg border p-3 text-left transition-all hover:bg-accent ${
+										className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
 											selectedId === caption.id
-												? "border-primary bg-accent ring-1 ring-primary/20"
-												: "border-transparent bg-card"
+												? "border-blue-200 bg-blue-50/50 shadow-sm ring-1 ring-blue-100"
+												: "border-transparent hover:border-slate-100 hover:bg-slate-50"
 										}`}
 									>
-										<div className="relative size-16 flex-none overflow-hidden rounded-md bg-muted">
+										<div className="relative size-16 flex-none overflow-hidden rounded-lg border border-slate-100 bg-slate-100">
 											{caption.mediaAsset?.publicUrl ? (
 												<img
 													src={caption.mediaAsset.publicUrl}
 													alt=""
-													className="size-full object-cover"
+													className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
 													loading="lazy"
 												/>
 											) : (
 												<div className="flex size-full items-center justify-center">
-													<ImageIcon className="size-6 text-muted-foreground/50" />
+													<ImageIcon className="size-6 text-slate-300" />
 												</div>
 											)}
-											<div className="absolute top-0 right-0 p-0.5">
+										</div>
+										<div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+											<div className="flex items-center justify-between gap-2">
+												<span className="font-semibold text-slate-700 text-xs">
+													#{caption.id}
+												</span>
 												<div
 													className={`size-2 rounded-full ${getStatusDotColor(
 														caption.status,
 													)}`}
 												/>
 											</div>
-										</div>
-										<div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
-											<div className="flex items-center justify-between gap-2">
-												<span className="truncate font-medium text-xs">
-													ID: {caption.id}
-												</span>
-												<span className="text-[10px] text-muted-foreground">
-													{new Date(caption.updatedAt).toLocaleDateString()}
-												</span>
-											</div>
-											<p className="line-clamp-2 text-muted-foreground text-xs">
+											<p className="line-clamp-2 text-slate-500 text-xs leading-relaxed">
 												{caption.manualCaption ||
 													caption.aiCaption ||
 													"暂无描述..."}
 											</p>
+											<span className="mt-1 text-[10px] text-slate-400">
+												{new Date(caption.updatedAt).toLocaleDateString()}
+											</span>
 										</div>
 									</button>
 								))
 							)}
 						</div>
 					</div>
-				</div>
+				</aside>
 
-				<div className="flex-1 overflow-y-auto bg-muted/10 p-6">
+				<section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 					{selectedCaption ? (
-						<div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
-							<div className="flex flex-col gap-4">
-								<Card className="overflow-hidden border-border/50 shadow-sm">
-									<div className="aspect-square w-full bg-muted/20 md:aspect-[4/3]">
+						<div className="flex h-full flex-col lg:flex-row">
+							<div className="flex flex-1 flex-col border-slate-100 border-b bg-slate-50/50 lg:w-1/2 lg:border-r lg:border-b-0">
+								<div className="flex flex-1 items-center justify-center p-6">
+									<div className="relative flex size-full items-center justify-center">
 										{selectedCaption.mediaAsset?.publicUrl ? (
 											<img
 												src={selectedCaption.mediaAsset.publicUrl}
 												alt="Target"
-												className="size-full object-contain"
+												className="max-h-full max-w-full rounded-lg object-contain shadow-sm"
 											/>
 										) : (
-											<div className="flex size-full items-center justify-center text-muted-foreground">
-												<ImageIcon className="size-12 opacity-20" />
+											<div className="flex flex-col items-center gap-2 text-slate-400">
+												<ImageIcon className="size-16 opacity-20" />
+												<span className="text-sm">无法加载预览图</span>
 											</div>
 										)}
 									</div>
-								</Card>
+								</div>
 
-								<Card>
-									<CardHeader className="py-4">
-										<CardTitle className="text-sm">Metadata</CardTitle>
-									</CardHeader>
-									<CardContent className="grid grid-cols-2 gap-4 text-xs">
-										<div>
-											<span className="text-muted-foreground">模型: </span>
-											<span className="font-medium">
+								<div className="border-slate-200 border-t bg-white p-6">
+									<h3 className="mb-4 font-semibold text-slate-900 text-sm">
+										Metadata
+									</h3>
+									<div className="grid grid-cols-2 gap-x-8 gap-y-4 text-xs">
+										<div className="flex justify-between border-slate-50 border-b pb-2">
+											<span className="text-slate-500">模型</span>
+											<span className="font-medium text-slate-700">
 												{selectedCaption.model ?? "Unknown"}
 											</span>
 										</div>
-										<div>
-											<span className="text-muted-foreground">置信度: </span>
-											<span className="font-medium">
+										<div className="flex justify-between border-slate-50 border-b pb-2">
+											<span className="text-slate-500">置信度</span>
+											<span className="font-medium text-slate-700">
 												{selectedCaption.confidence
 													? `${Math.round(selectedCaption.confidence * 100)}%`
 													: "N/A"}
 											</span>
 										</div>
-										<div>
-											<span className="text-muted-foreground">尺寸: </span>
-											<span className="font-medium">
+										<div className="flex justify-between border-slate-50 border-b pb-2">
+											<span className="text-slate-500">尺寸</span>
+											<span className="font-medium text-slate-700">
 												{selectedCaption.mediaAsset?.width} x{" "}
 												{selectedCaption.mediaAsset?.height}
 											</span>
 										</div>
-										<div>
-											<span className="text-muted-foreground">Prompt: </span>
+										<div className="flex justify-between border-slate-50 border-b pb-2">
+											<span className="text-slate-500">Prompt</span>
 											<span
-												className="truncate font-medium"
+												className="max-w-[120px] truncate font-medium text-slate-700"
 												title={
 													selectedCaption.promptTemplate?.userPromptTemplate
 												}
@@ -511,139 +500,157 @@ function EditorView() {
 												{selectedCaption.promptTemplate?.name ?? "Default"}
 											</span>
 										</div>
-									</CardContent>
-								</Card>
+									</div>
+								</div>
 							</div>
 
-							<div className="flex flex-col gap-4">
-								<Card className="flex flex-1 flex-col border-border/50 shadow-sm">
-									<CardHeader className="pb-4">
-										<div className="flex items-center justify-between">
-											<div>
-												<CardTitle>编辑描述</CardTitle>
-												<CardDescription>
-													AI 生成结果可能需要人工微调
-												</CardDescription>
-											</div>
-											<Badge variant={statusColors[selectedCaption.status]}>
-												{statusLabels[selectedCaption.status]}
-											</Badge>
-										</div>
-									</CardHeader>
-									<CardContent className="flex flex-1 flex-col gap-4">
-										<div className="flex-1">
-											<Textarea
-												className="min-h-[200px] resize-none text-base leading-relaxed"
-												placeholder="输入描述..."
-												value={editValue}
-												onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-													setEditValue(e.target.value)
-												}
-											/>
-										</div>
+							<div className="flex flex-1 flex-col bg-white lg:w-1/2">
+								<div className="flex items-center justify-between border-slate-100 border-b px-6 py-4">
+									<div>
+										<h2 className="font-semibold text-lg text-slate-900">
+											编辑描述
+										</h2>
+										<p className="text-slate-500 text-xs">
+											AI 生成结果可能需要人工微调
+										</p>
+									</div>
+									<Badge
+										className={`px-3 py-1 font-medium ${getStatusBadgeStyle(
+											selectedCaption.status,
+										)}`}
+									>
+										{statusLabels[selectedCaption.status]}
+									</Badge>
+								</div>
 
-										<div className="space-y-4 pt-4">
-											<div className="flex items-center gap-2 text-sm">
-												<span className="text-muted-foreground">AI 参考:</span>
-												<p className="line-clamp-2 flex-1 text-muted-foreground text-xs italic">
-													{selectedCaption.aiCaption || "无 AI 生成内容"}
-												</p>
-											</div>
+								<div className="flex flex-1 flex-col gap-4 p-6">
+									<div className="relative flex-1">
+										<Textarea
+											className="h-full w-full resize-none border-slate-200 bg-slate-50 p-4 text-base text-slate-800 leading-relaxed placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20"
+											placeholder="请输入图片描述..."
+											value={editValue}
+											onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+												setEditValue(e.target.value)
+											}
+										/>
+									</div>
 
-											<div className="grid grid-cols-2 gap-3">
-												<Button
-													variant="outline"
-													className="w-full justify-start border-destructive/20 text-destructive hover:bg-destructive/10"
-													onClick={handleReject}
-													disabled={rejectMutation.isPending}
-												>
-													<ThumbsDown className="mr-2 size-4" />
-													驳回
-												</Button>
-												<Button
-													className="w-full justify-start bg-emerald-600 hover:bg-emerald-700"
-													onClick={handleApprove}
-													disabled={approveMutation.isPending}
-												>
-													<ThumbsUp className="mr-2 size-4" />
-													通过
-												</Button>
-											</div>
+									<div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50 p-4">
+										<div className="mb-2 flex items-center gap-2">
+											<span className="font-semibold text-slate-500 text-xs uppercase tracking-wider">
+												AI 参考
+											</span>
+										</div>
+										<p className="text-slate-600 text-xs italic leading-relaxed">
+											{selectedCaption.aiCaption || "无 AI 生成内容"}
+										</p>
+									</div>
+								</div>
+
+								<div className="border-slate-100 border-t bg-slate-50/50 px-6 py-4">
+									<div className="flex flex-col gap-4">
+										<div className="grid grid-cols-2 gap-4">
 											<Button
-												variant="secondary"
-												className="w-full"
-												onClick={handleSave}
-												disabled={updateMutation.isPending}
+												variant="outline"
+												className="h-10 border-red-200 text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+												onClick={handleReject}
+												disabled={rejectMutation.isPending}
 											>
-												{updateMutation.isPending ? (
-													<Loader2 className="mr-2 size-4 animate-spin" />
-												) : (
-													<Check className="mr-2 size-4" />
-												)}
-												保存修改
+												<ThumbsDown className="mr-2 size-4" />
+												驳回
 											</Button>
 											<Button
+												className="h-10 bg-emerald-600 text-white shadow-emerald-600/20 shadow-sm transition-all hover:bg-emerald-700 hover:shadow-emerald-600/30"
+												onClick={handleApprove}
+												disabled={approveMutation.isPending}
+											>
+												<ThumbsUp className="mr-2 size-4" />
+												通过
+											</Button>
+										</div>
+
+										<Button
+											variant="secondary"
+											className="h-10 w-full bg-blue-600 text-white shadow-blue-600/20 shadow-sm hover:bg-blue-700"
+											onClick={handleSave}
+											disabled={updateMutation.isPending}
+										>
+											{updateMutation.isPending ? (
+												<Loader2 className="mr-2 size-4 animate-spin" />
+											) : (
+												<Check className="mr-2 size-4" />
+											)}
+											保存修改
+										</Button>
+
+										<div className="flex items-center justify-between gap-4 pt-2">
+											<Button
 												variant="ghost"
-												className="w-full"
+												size="sm"
+												className="text-slate-500 hover:text-slate-800"
 												onClick={handleRegenerate}
 												disabled={regenerateMutation.isPending}
 											>
-												{regenerateMutation.isPending ? (
-													<Loader2 className="mr-2 size-4 animate-spin" />
-												) : (
-													<RefreshCw className="mr-2 size-4" />
-												)}
+												<RefreshCw
+													className={`mr-2 size-3 ${regenerateMutation.isPending ? "animate-spin" : ""}`}
+												/>
 												重新生成
 											</Button>
-										</div>
-									</CardContent>
-								</Card>
 
-								<div className="flex justify-between gap-2">
-									<Button
-										variant="ghost"
-										onClick={() => {
-											const currentIndex = captions.findIndex(
-												(c) => c.id === selectedId,
-											);
-											if (currentIndex > 0) {
-												setSelectedId(captions[currentIndex - 1].id);
-											}
-										}}
-										disabled={
-											!selectedId ||
-											captions.findIndex((c) => c.id === selectedId) <= 0
-										}
-									>
-										<ChevronLeft className="mr-2 size-4" />
-										上一个
-									</Button>
-									<Button
-										variant="ghost"
-										onClick={selectNext}
-										disabled={
-											!selectedId ||
-											captions.findIndex((c) => c.id === selectedId) >=
-												captions.length - 1
-										}
-									>
-										下一个
-										<ChevronRight className="ml-2 size-4" />
-									</Button>
+											<div className="flex items-center gap-2">
+												<Button
+													variant="ghost"
+													size="icon"
+													className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+													onClick={() => {
+														const currentIndex = captions.findIndex(
+															(c) => c.id === selectedId,
+														);
+														if (currentIndex > 0) {
+															setSelectedId(captions[currentIndex - 1].id);
+														}
+													}}
+													disabled={
+														!selectedId ||
+														captions.findIndex((c) => c.id === selectedId) <= 0
+													}
+												>
+													<ChevronLeft className="size-4" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+													onClick={selectNext}
+													disabled={
+														!selectedId ||
+														captions.findIndex((c) => c.id === selectedId) >=
+															captions.length - 1
+													}
+												>
+													<ChevronRight className="size-4" />
+												</Button>
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
 					) : (
-						<div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-							<div className="rounded-full bg-muted p-4">
-								<Filter className="size-8 opacity-50" />
+						<div className="flex h-full flex-col items-center justify-center bg-slate-50/50 text-slate-400">
+							<div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
+								<Filter className="size-10 text-slate-300" />
 							</div>
-							<p className="mt-4 font-medium">请选择一个 Caption 开始审核</p>
-							<p className="text-sm">从左侧列表中点击任意项目</p>
+							<h3 className="mt-6 font-semibold text-slate-700">
+								请选择一个 Caption
+							</h3>
+							<p className="mt-2 text-slate-500 text-sm">
+								从左侧列表中点击任意项目开始审核
+							</p>
 						</div>
 					)}
-				</div>
-			</div>
+				</section>
+			</main>
 		</div>
 	);
 }
@@ -657,30 +664,22 @@ function StatBadge({
 	count: number;
 	color: "default" | "secondary" | "success" | "warning" | "destructive";
 }) {
+	const colorClasses = {
+		default: "bg-blue-100 text-blue-700 border-blue-200",
+		secondary: "bg-slate-100 text-slate-700 border-slate-200",
+		success: "bg-emerald-100 text-emerald-700 border-emerald-200",
+		warning: "bg-amber-100 text-amber-700 border-amber-200",
+		destructive: "bg-red-100 text-red-700 border-red-200",
+	};
+
 	return (
-		<div className="flex items-center gap-2 rounded-full border bg-card px-3 py-1 shadow-sm">
-			<div className={`size-2 rounded-full bg-${getTailwindColor(color)}`} />
-			<span className="font-medium text-muted-foreground text-xs">{label}</span>
-			<span className="font-bold text-xs">{count}</span>
+		<div
+			className={`flex items-center gap-2 rounded-full border px-3 py-1 font-medium text-xs transition-colors ${colorClasses[color]}`}
+		>
+			<span>{label}</span>
+			<span className="font-bold opacity-80">{count}</span>
 		</div>
 	);
-}
-
-function getTailwindColor(
-	color: "default" | "secondary" | "success" | "warning" | "destructive",
-) {
-	switch (color) {
-		case "success":
-			return "emerald-500";
-		case "warning":
-			return "amber-500";
-		case "destructive":
-			return "red-500";
-		case "secondary":
-			return "gray-400";
-		default:
-			return "blue-500";
-	}
 }
 
 function getStatusDotColor(status: string) {
@@ -694,6 +693,21 @@ function getStatusDotColor(status: string) {
 		case "processing":
 			return "bg-blue-500";
 		default:
-			return "bg-gray-400";
+			return "bg-slate-300";
+	}
+}
+
+function getStatusBadgeStyle(status: string) {
+	switch (status) {
+		case "approved":
+			return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-transparent";
+		case "rejected":
+			return "bg-red-100 text-red-700 hover:bg-red-100 border-transparent";
+		case "completed":
+			return "bg-amber-100 text-amber-700 hover:bg-amber-100 border-transparent";
+		case "processing":
+			return "bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent";
+		default:
+			return "bg-slate-100 text-slate-700 hover:bg-slate-100 border-transparent";
 	}
 }
