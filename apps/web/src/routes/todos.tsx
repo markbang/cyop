@@ -48,13 +48,16 @@ function AiOps() {
 	const [batchModel, setBatchModel] = useState("");
 	const [batchLimit, setBatchLimit] = useState(50);
 	const [generatedCaption, setGeneratedCaption] = useState("");
+	const [jobsPage, setJobsPage] = useState(1);
 
 	const models = useQuery(trpc.model.list.queryOptions());
 	const datasets = useQuery(trpc.dataset.list.queryOptions());
 	const jobs = useQuery(
-		trpc.captionOps.listJobs.queryOptions(
-			batchDataset ? { datasetId: Number(batchDataset) } : undefined,
-		),
+		trpc.captionOps.listJobs.queryOptions({
+			datasetId: batchDataset ? Number(batchDataset) : undefined,
+			page: jobsPage,
+			pageSize: 20,
+		}),
 	);
 
 	const createModel = useMutation(
@@ -111,8 +114,17 @@ function AiOps() {
 		trpc.captionOps.processQueued.mutationOptions({
 			onSuccess: (res) => {
 				toast.success(
-					`队列执行完成：处理 ${res.processed} 条，成功 ${res.succeeded}，失败 ${res.failed}`,
+					`队列执行完成：处理 ${res.processed} 条，成功 ${res.succeeded}，失败 ${res.failed}，跳过锁定 ${res.skippedLocked} 条`,
 				);
+				jobs.refetch();
+			},
+			onError: (error) => toast.error(error.message),
+		}),
+	);
+	const retryFailed = useMutation(
+		trpc.captionOps.retryFailed.mutationOptions({
+			onSuccess: (res) => {
+				toast.success(`已重试 ${res.retried} 条失败任务`);
 				jobs.refetch();
 			},
 			onError: (error) => toast.error(error.message),
@@ -392,9 +404,10 @@ function AiOps() {
 							<select
 								className="h-10 w-full rounded-md border px-3 text-sm"
 								value={batchDataset}
-								onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-									setBatchDataset(event.target.value)
-								}
+								onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+									setBatchDataset(event.target.value);
+									setJobsPage(1);
+								}}
 							>
 								<option value="">选择数据集</option>
 								{datasets.data?.map((dataset) => (
@@ -458,6 +471,7 @@ function AiOps() {
 									processQueued.mutate({
 										limit: batchLimit > 100 ? 100 : batchLimit,
 										modelId: selectedModelId,
+										maxConcurrency: 2,
 									})
 								}
 							>
@@ -467,6 +481,23 @@ function AiOps() {
 									<RefreshCw className="mr-2 h-4 w-4" />
 								)}
 								执行队列
+							</Button>
+							<Button
+								variant="outline"
+								disabled={!batchDataset || retryFailed.isPending}
+								onClick={() =>
+									retryFailed.mutate({
+										datasetId: Number(batchDataset),
+										limit: batchLimit > 200 ? 200 : batchLimit,
+									})
+								}
+							>
+								{retryFailed.isPending ? (
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								) : (
+									<RefreshCw className="mr-2 h-4 w-4" />
+								)}
+								重试失败任务
 							</Button>
 						</div>
 					</CardContent>
@@ -478,7 +509,7 @@ function AiOps() {
 					<div>
 						<CardTitle>最近 Caption 任务</CardTitle>
 						<CardDescription>
-							最多显示 200 条，包含模型信息与素材链接
+							分页查看任务，包含模型信息与素材链接
 						</CardDescription>
 					</div>
 					<Button
@@ -494,8 +525,8 @@ function AiOps() {
 					</Button>
 				</CardHeader>
 				<CardContent className="space-y-2">
-					{jobs.data?.length ? (
-						jobs.data.map((job) => (
+					{jobs.data?.items.length ? (
+						jobs.data.items.map((job) => (
 							<div
 								key={job.id}
 								className="flex flex-col gap-1 rounded-lg border px-3 py-2 text-sm md:flex-row md:items-center md:justify-between"
@@ -529,6 +560,34 @@ function AiOps() {
 					) : (
 						<p className="text-muted-foreground text-sm">暂无任务</p>
 					)}
+					<div className="flex items-center justify-between pt-2">
+						<p className="text-muted-foreground text-xs">
+							第 {jobs.data?.page ?? jobsPage} / {jobs.data?.totalPages ?? 0} 页
+							· 共 {jobs.data?.total ?? 0} 条
+						</p>
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={jobsPage <= 1 || jobs.isFetching}
+								onClick={() => setJobsPage((prev) => Math.max(1, prev - 1))}
+							>
+								上一页
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={
+									jobs.isFetching ||
+									jobsPage >= (jobs.data?.totalPages ?? 0) ||
+									(jobs.data?.totalPages ?? 0) === 0
+								}
+								onClick={() => setJobsPage((prev) => prev + 1)}
+							>
+								下一页
+							</Button>
+						</div>
+					</div>
 				</CardContent>
 			</Card>
 		</div>

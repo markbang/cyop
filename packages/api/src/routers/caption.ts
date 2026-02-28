@@ -1,5 +1,5 @@
 import { db } from "@cyop/db";
-import { and, desc, eq, inArray } from "@cyop/db/drizzle-orm";
+import { and, desc, eq, inArray, sql } from "@cyop/db/drizzle-orm";
 import {
 	aiModels,
 	captionJobStatusValues,
@@ -220,11 +220,13 @@ export const captionRouter = router({
 				.object({
 					limit: z.number().int().min(1).max(100).default(20),
 					modelId: z.number().int().positive().optional(),
+					maxConcurrency: z.number().int().min(1).max(5).default(2),
 				})
 				.optional(),
 		)
 		.mutation(async ({ input }) => {
 			const limit = input?.limit ?? 20;
+			const maxConcurrency = input?.maxConcurrency ?? 2;
 
 			const queuedJobs = await db
 				.select()
@@ -234,73 +236,154 @@ export const captionRouter = router({
 				.limit(limit);
 
 			if (!queuedJobs.length) {
-				return { processed: 0, succeeded: 0, failed: 0 };
+				return { processed: 0, succeeded: 0, failed: 0, skippedLocked: 0 };
 			}
 
+			let processed = 0;
 			let succeeded = 0;
 			let failed = 0;
+			let skippedLocked = 0;
 
-			for (const job of queuedJobs) {
-				const startedAt = new Date();
-				await db
-					.update(captionJobs)
-					.set({
-						status: "running",
-						startedAt,
-						updatedAt: startedAt,
-					})
-					.where(eq(captionJobs.id, job.id));
+			const jobs = [...queuedJobs];
 
-				try {
-					if (!job.imageUrl) {
-						throw new Error("任务缺少 imageUrl");
+			const runWorker = async () => {
+				while (jobs.length > 0) {
+					const job = jobs.shift();
+					if (!job) {
+						return;
 					}
 
-					const model = await resolveModel(job.modelId ?? input?.modelId);
-					const result = await generateCaption({
-						imageUrl: job.imageUrl,
-						prompt: job.prompt ?? undefined,
-						model,
-					});
-					const completedAt = new Date();
-
-					await db
+					const startedAt = new Date();
+					const [locked] = await db
 						.update(captionJobs)
 						.set({
-							status: "succeeded",
-							modelId: model.id || null,
-							caption: result.caption,
-							error: null,
-							completedAt,
-							updatedAt: completedAt,
+							status: "running",
+							startedAt,
+							updatedAt: startedAt,
 						})
-						.where(eq(captionJobs.id, job.id));
+						.where(
+							and(eq(captionJobs.id, job.id), eq(captionJobs.status, "queued")),
+						)
+						.returning({ id: captionJobs.id });
 
-					succeeded += 1;
-				} catch (error) {
-					const completedAt = new Date();
-					const errorText =
-						error instanceof Error ? error.message : "caption 任务处理失败";
+					if (!locked) {
+						skippedLocked += 1;
+						continue;
+					}
 
-					await db
-						.update(captionJobs)
-						.set({
-							status: "failed",
-							error: errorText,
-							completedAt,
-							updatedAt: completedAt,
-						})
-						.where(eq(captionJobs.id, job.id));
+					processed += 1;
 
-					failed += 1;
+					try {
+						if (!job.imageUrl) {
+							throw new Error("任务缺少 imageUrl");
+						}
+
+						const model = await resolveModel(job.modelId ?? input?.modelId);
+						const result = await generateCaption({
+							imageUrl: job.imageUrl,
+							prompt: job.prompt ?? undefined,
+							model,
+						});
+						const completedAt = new Date();
+
+						await db
+							.update(captionJobs)
+							.set({
+								status: "succeeded",
+								modelId: model.id || null,
+								caption: result.caption,
+								error: null,
+								completedAt,
+								updatedAt: completedAt,
+							})
+							.where(eq(captionJobs.id, job.id));
+
+						succeeded += 1;
+					} catch (error) {
+						const completedAt = new Date();
+						const errorText =
+							error instanceof Error ? error.message : "caption 任务处理失败";
+
+						await db
+							.update(captionJobs)
+							.set({
+								status: "failed",
+								error: errorText,
+								completedAt,
+								updatedAt: completedAt,
+							})
+							.where(eq(captionJobs.id, job.id));
+
+						failed += 1;
+					}
 				}
-			}
+			};
+
+			const workerCount = Math.min(maxConcurrency, queuedJobs.length);
+			await Promise.all(
+				Array.from({ length: workerCount }).map(() => runWorker()),
+			);
 
 			return {
-				processed: queuedJobs.length,
+				processed,
 				succeeded,
 				failed,
+				skippedLocked,
 			};
+		}),
+
+	retryFailed: protectedProcedure
+		.input(
+			z
+				.object({
+					jobIds: z.array(z.number().int().positive()).min(1).optional(),
+					datasetId: z.number().int().positive().optional(),
+					limit: z.number().int().min(1).max(200).default(50),
+				})
+				.refine((val) => Boolean(val.jobIds?.length || val.datasetId), {
+					message: "jobIds 或 datasetId 至少提供一个",
+				}),
+		)
+		.mutation(async ({ input }) => {
+			const conditions = [eq(captionJobs.status, "failed")];
+			if (input.datasetId) {
+				conditions.push(eq(captionJobs.datasetId, input.datasetId));
+			}
+			if (input.jobIds?.length) {
+				conditions.push(inArray(captionJobs.id, input.jobIds));
+			}
+
+			const jobsToRetry = await db
+				.select({ id: captionJobs.id })
+				.from(captionJobs)
+				.where(and(...conditions))
+				.orderBy(desc(captionJobs.updatedAt))
+				.limit(input.limit);
+
+			if (!jobsToRetry.length) {
+				return { retried: 0 };
+			}
+
+			const now = new Date();
+			const retried = await db
+				.update(captionJobs)
+				.set({
+					status: "queued",
+					caption: null,
+					error: null,
+					startedAt: null,
+					completedAt: null,
+					updatedAt: now,
+				})
+				.where(
+					inArray(
+						captionJobs.id,
+						jobsToRetry.map((job) => job.id),
+					),
+				)
+				.returning({ id: captionJobs.id });
+
+			return { retried: retried.length };
 		}),
 
 	listJobs: protectedProcedure
@@ -310,6 +393,8 @@ export const captionRouter = router({
 					datasetId: z.number().int().positive().optional(),
 					assetId: z.number().int().positive().optional(),
 					status: z.enum(captionJobStatusValues).optional(),
+					page: z.number().int().min(1).default(1),
+					pageSize: z.number().int().min(1).max(200).default(50),
 				})
 				.optional(),
 		)
@@ -325,6 +410,17 @@ export const captionRouter = router({
 				conditions.push(eq(captionJobs.status, input.status));
 			}
 
+			const page = input?.page ?? 1;
+			const pageSize = input?.pageSize ?? 50;
+			const offset = (page - 1) * pageSize;
+
+			const [countRow] = await db
+				.select({ total: sql<number>`count(*)::int` })
+				.from(captionJobs)
+				.where(conditions.length ? and(...conditions) : undefined);
+			const total = countRow?.total ?? 0;
+			const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
+
 			const rows = await db
 				.select({
 					job: captionJobs,
@@ -338,13 +434,20 @@ export const captionRouter = router({
 				.leftJoin(aiModels, eq(captionJobs.modelId, aiModels.id))
 				.where(conditions.length ? and(...conditions) : undefined)
 				.orderBy(desc(captionJobs.updatedAt))
-				.limit(200);
+				.limit(pageSize)
+				.offset(offset);
 
-			return rows.map(({ job, asset, dataset, model }) => ({
-				...job,
-				asset,
-				dataset,
-				model,
-			}));
+			return {
+				items: rows.map(({ job, asset, dataset, model }) => ({
+					...job,
+					asset,
+					dataset,
+					model,
+				})),
+				page,
+				pageSize,
+				total,
+				totalPages,
+			};
 		}),
 });
