@@ -47,6 +47,7 @@ function AiOps() {
 	const [batchDataset, setBatchDataset] = useState("");
 	const [batchModel, setBatchModel] = useState("");
 	const [batchLimit, setBatchLimit] = useState(50);
+	const [generatedCaption, setGeneratedCaption] = useState("");
 
 	const models = useQuery(trpc.model.list.queryOptions());
 	const datasets = useQuery(trpc.dataset.list.queryOptions());
@@ -87,7 +88,7 @@ function AiOps() {
 		trpc.captionOps.generate.mutationOptions({
 			onSuccess: (result) => {
 				toast.success("已生成 Caption");
-				setTestPrompt(result.caption);
+				setGeneratedCaption(result.caption);
 				jobs.refetch();
 			},
 			onError: (error) => toast.error(error.message),
@@ -96,7 +97,22 @@ function AiOps() {
 	const enqueueBatch = useMutation(
 		trpc.captionOps.enqueueBatch.mutationOptions({
 			onSuccess: (res) => {
-				toast.success(`已创建 ${res.count} 条批处理任务`);
+				const skipText =
+					res.skippedMissingUrl > 0
+						? `，跳过 ${res.skippedMissingUrl} 条缺少 URL 的素材`
+						: "";
+				toast.success(`已创建 ${res.count} 条批处理任务${skipText}`);
+				jobs.refetch();
+			},
+			onError: (error) => toast.error(error.message),
+		}),
+	);
+	const processQueued = useMutation(
+		trpc.captionOps.processQueued.mutationOptions({
+			onSuccess: (res) => {
+				toast.success(
+					`队列执行完成：处理 ${res.processed} 条，成功 ${res.succeeded}，失败 ${res.failed}`,
+				);
 				jobs.refetch();
 			},
 			onError: (error) => toast.error(error.message),
@@ -264,7 +280,9 @@ function AiOps() {
 							onClick={() => models.refetch()}
 							disabled={models.isFetching}
 						>
-							<RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+							<RefreshCw
+								className={`mr-2 h-4 w-4 ${models.isFetching ? "animate-spin" : ""}`}
+							/>
 							刷新
 						</Button>
 						{models.data?.length ? (
@@ -355,9 +373,9 @@ function AiOps() {
 							)}
 							生成 Caption
 						</Button>
-						{generateCaption.data?.caption ? (
+						{generatedCaption ? (
 							<div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
-								{generateCaption.data.caption}
+								{generatedCaption}
 							</div>
 						) : null}
 					</CardContent>
@@ -415,23 +433,42 @@ function AiOps() {
 								}
 							/>
 						</div>
-						<Button
-							disabled={!batchDataset || enqueueBatch.isPending}
-							onClick={() =>
-								enqueueBatch.mutate({
-									datasetId: Number(batchDataset),
-									modelId: selectedModelId,
-									limit: batchLimit,
-								})
-							}
-						>
-							{enqueueBatch.isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-							) : (
-								<Sparkles className="mr-2 h-4 w-4" />
-							)}
-							创建批处理
-						</Button>
+						<div className="flex flex-wrap gap-2">
+							<Button
+								disabled={!batchDataset || enqueueBatch.isPending}
+								onClick={() =>
+									enqueueBatch.mutate({
+										datasetId: Number(batchDataset),
+										modelId: selectedModelId,
+										limit: batchLimit,
+									})
+								}
+							>
+								{enqueueBatch.isPending ? (
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								) : (
+									<Sparkles className="mr-2 h-4 w-4" />
+								)}
+								创建批处理
+							</Button>
+							<Button
+								variant="outline"
+								disabled={processQueued.isPending}
+								onClick={() =>
+									processQueued.mutate({
+										limit: batchLimit > 100 ? 100 : batchLimit,
+										modelId: selectedModelId,
+									})
+								}
+							>
+								{processQueued.isPending ? (
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								) : (
+									<RefreshCw className="mr-2 h-4 w-4" />
+								)}
+								执行队列
+							</Button>
+						</div>
 					</CardContent>
 				</Card>
 			</div>
@@ -450,7 +487,9 @@ function AiOps() {
 						onClick={() => jobs.refetch()}
 						disabled={jobs.isFetching}
 					>
-						<RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+						<RefreshCw
+							className={`mr-2 h-4 w-4 ${jobs.isFetching ? "animate-spin" : ""}`}
+						/>
 						刷新
 					</Button>
 				</CardHeader>

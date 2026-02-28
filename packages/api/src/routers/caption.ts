@@ -23,20 +23,24 @@ async function resolveModel(modelId?: number) {
 		const [model] = await db
 			.select()
 			.from(aiModels)
-			.where(eq(aiModels.id, modelId))
+			.where(and(eq(aiModels.id, modelId), eq(aiModels.type, "caption")))
 			.limit(1);
 		if (!model) {
-			throw new TRPCError({ code: "NOT_FOUND", message: "找不到指定的模型" });
+			throw new TRPCError({
+				code: "NOT_FOUND",
+				message: "找不到指定的 caption 模型",
+			});
 		}
 		if (!model.enabled) {
 			throw new TRPCError({ code: "BAD_REQUEST", message: "模型已被禁用" });
 		}
 		return model;
 	}
+
 	const [model] = await db
 		.select()
 		.from(aiModels)
-		.where(eq(aiModels.type, "caption"))
+		.where(and(eq(aiModels.type, "caption"), eq(aiModels.enabled, true)))
 		.orderBy(desc(aiModels.defaultModel), desc(aiModels.updatedAt))
 		.limit(1);
 	if (model) {
@@ -172,24 +176,130 @@ export const captionRouter = router({
 			}
 
 			const now = new Date();
-			const jobsToInsert = assets.map((asset) => ({
-				datasetId: asset.datasetId,
-				assetId: asset.id,
-				modelId: model.id || null,
-				imageUrl: asset.publicUrl,
-				status: "queued" as const,
-				metadata: {
-					requestedBy: ctx.session?.user?.email,
-				},
-				createdAt: now,
-				updatedAt: now,
-			}));
+			const jobsToInsert: Array<typeof captionJobs.$inferInsert> = [];
+			let skippedMissingUrl = 0;
+
+			for (const asset of assets) {
+				if (!asset.publicUrl) {
+					skippedMissingUrl += 1;
+					continue;
+				}
+				jobsToInsert.push({
+					datasetId: asset.datasetId,
+					assetId: asset.id,
+					modelId: model.id || null,
+					imageUrl: asset.publicUrl,
+					status: "queued",
+					metadata: {
+						requestedBy: ctx.session?.user?.email,
+					},
+					createdAt: now,
+					updatedAt: now,
+				});
+			}
+
+			if (!jobsToInsert.length) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "素材均缺少可访问的 URL，无法创建任务",
+				});
+			}
 
 			await db.insert(captionJobs).values(jobsToInsert);
 
 			return {
 				count: jobsToInsert.length,
+				skippedMissingUrl,
 				modelId: model.id,
+			};
+		}),
+
+	processQueued: protectedProcedure
+		.input(
+			z
+				.object({
+					limit: z.number().int().min(1).max(100).default(20),
+					modelId: z.number().int().positive().optional(),
+				})
+				.optional(),
+		)
+		.mutation(async ({ input }) => {
+			const limit = input?.limit ?? 20;
+
+			const queuedJobs = await db
+				.select()
+				.from(captionJobs)
+				.where(eq(captionJobs.status, "queued"))
+				.orderBy(desc(captionJobs.createdAt))
+				.limit(limit);
+
+			if (!queuedJobs.length) {
+				return { processed: 0, succeeded: 0, failed: 0 };
+			}
+
+			let succeeded = 0;
+			let failed = 0;
+
+			for (const job of queuedJobs) {
+				const startedAt = new Date();
+				await db
+					.update(captionJobs)
+					.set({
+						status: "running",
+						startedAt,
+						updatedAt: startedAt,
+					})
+					.where(eq(captionJobs.id, job.id));
+
+				try {
+					if (!job.imageUrl) {
+						throw new Error("任务缺少 imageUrl");
+					}
+
+					const model = await resolveModel(job.modelId ?? input?.modelId);
+					const result = await generateCaption({
+						imageUrl: job.imageUrl,
+						prompt: job.prompt ?? undefined,
+						model,
+					});
+					const completedAt = new Date();
+
+					await db
+						.update(captionJobs)
+						.set({
+							status: "succeeded",
+							modelId: model.id || null,
+							caption: result.caption,
+							error: null,
+							completedAt,
+							updatedAt: completedAt,
+						})
+						.where(eq(captionJobs.id, job.id));
+
+					succeeded += 1;
+				} catch (error) {
+					const completedAt = new Date();
+					const errorText =
+						error instanceof Error ? error.message : "caption 任务处理失败";
+
+					await db
+						.update(captionJobs)
+						.set({
+							status: "failed",
+							error: errorText,
+							completedAt,
+							updatedAt: completedAt,
+						})
+						.where(eq(captionJobs.id, job.id));
+
+					failed += 1;
+				}
+			}
+
+			return {
+				processed: queuedJobs.length,
+				succeeded,
+				failed,
 			};
 		}),
 
