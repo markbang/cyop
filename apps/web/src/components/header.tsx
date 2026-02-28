@@ -7,7 +7,7 @@ export default function Header() {
 		{ to: "/", label: "概览" },
 		{ to: "/dashboard", label: "控制塔" },
 		{ to: "/media", label: "素材库" },
-		{ to: "/todos", label: "示例 API" },
+		{ to: "/todos", label: "AI模型与批处理" },
 	] as const;
 
 	return (

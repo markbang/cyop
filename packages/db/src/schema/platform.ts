@@ -137,6 +137,20 @@ export const mediaStatusValues = [
 ] as const;
 export const mediaStatusEnum = pgEnum("media_status", mediaStatusValues);
 
+export const aiModelTypeValues = ["caption", "tag", "embedding"] as const;
+export const aiModelTypeEnum = pgEnum("ai_model_type", aiModelTypeValues);
+
+export const captionJobStatusValues = [
+	"queued",
+	"running",
+	"succeeded",
+	"failed",
+] as const;
+export const captionJobStatusEnum = pgEnum(
+	"caption_job_status",
+	captionJobStatusValues,
+);
+
 export const mediaAssets = pgTable("media_assets", {
 	id: serial("id").primaryKey(),
 	datasetId: integer("dataset_id")
@@ -215,6 +229,50 @@ export const captions = pgTable("captions", {
 		.$type<Record<string, unknown>>()
 		.notNull()
 		.default(sql`'{}'::jsonb`),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const aiModels = pgTable("ai_models", {
+	id: serial("id").primaryKey(),
+	name: text("name").notNull(),
+	provider: text("provider").notNull(),
+	modelName: text("model_name").notNull(),
+	type: aiModelTypeEnum("type").notNull().default("caption"),
+	baseUrl: text("base_url"),
+	apiKeyEnv: text("api_key_env"),
+	defaultModel: boolean("default_model").notNull().default(false),
+	enabled: boolean("enabled").notNull().default(true),
+	metadata: jsonb("metadata")
+		.$type<Record<string, unknown>>()
+		.notNull()
+		.default(sql`'{}'::jsonb`),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const captionJobs = pgTable("caption_jobs", {
+	id: serial("id").primaryKey(),
+	datasetId: integer("dataset_id").references(() => datasets.id, {
+		onDelete: "cascade",
+	}),
+	assetId: integer("asset_id").references(() => mediaAssets.id, {
+		onDelete: "cascade",
+	}),
+	modelId: integer("model_id").references(() => aiModels.id, {
+		onDelete: "set null",
+	}),
+	imageUrl: text("image_url"),
+	prompt: text("prompt"),
+	caption: text("caption"),
+	error: text("error"),
+	status: captionJobStatusEnum("status").notNull().default("queued"),
+	metadata: jsonb("metadata")
+		.$type<Record<string, unknown>>()
+		.notNull()
+		.default(sql`'{}'::jsonb`),
+	startedAt: timestamp("started_at"),
+	completedAt: timestamp("completed_at"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
