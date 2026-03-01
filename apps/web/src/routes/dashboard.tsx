@@ -115,7 +115,6 @@ const getStatusBadgeStyles = (status: string) => {
 };
 
 function DashboardView() {
-	const { session } = Route.useRouteContext();
 	const createPanelRef = useRef<HTMLDivElement>(null);
 	const [formState, setFormState] = useState({
 		title: "",
