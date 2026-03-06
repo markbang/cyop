@@ -1,0 +1,144 @@
+---
+title: 部署说明
+description: Web、Server、Docs 的构建输出与部署建议
+---
+
+# 部署说明
+
+## 总体思路
+
+`cyop` 目前由三个可独立部署的应用组成：
+
+- `apps/web`：前端控制台
+- `apps/server`：API 服务
+- `apps/fumadocs`：文档站
+
+你可以独立部署，也可以在同一平台中拆分为多个服务。
+
+## 全仓构建
+
+```bash
+bun run build
+```
+
+适合在 CI 中统一执行一次构建检查。
+
+## Web 部署
+
+```bash
+cd apps/web && bun run build
+```
+
+输出目录：
+
+```txt
+apps/web/dist
+```
+
+适合：
+
+- 静态托管
+- CDN
+- 对象存储 + CDN
+
+### Web 关键环境变量
+
+```bash
+VITE_SERVER_URL=
+```
+
+## Server 部署
+
+```bash
+cd apps/server && bun run build
+```
+
+或编译成单文件可执行：
+
+```bash
+cd apps/server && bun run compile
+```
+
+### Server 关键环境变量
+
+基础：
+
+```bash
+DATABASE_URL=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
+CORS_ORIGIN=
+```
+
+可选能力：
+
+```bash
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_BUCKET=
+S3_REGION=
+S3_ENDPOINT=
+S3_FORCE_PATH_STYLE=
+ASSET_PUBLIC_URL=
+AUTOMATION_WEBHOOK_URL=
+AI_CAPTION_MODEL=
+AI_CAPTION_API_KEY=
+AI_CAPTION_BASE_URL=
+AI_CAPTION_PROMPT=
+```
+
+## Docs 部署
+
+```bash
+cd apps/fumadocs && bun run build
+```
+
+适合：
+
+- Vercel
+- 自托管 Next.js Runtime
+- 任意支持 Next.js 16 的平台
+
+## 部署前检查清单
+
+建议在 CI 或发布前执行：
+
+```bash
+bun run check
+bun run check-types
+bun run build
+```
+
+## 推荐发布顺序
+
+1. 发布数据库变更
+2. 发布 Server
+3. 发布 Web
+4. 发布 Docs
+
+## 数据库变更建议
+
+如果修改了 `packages/db/src/schema/*`：
+
+- 先在临时数据库验证
+- 再执行 `bun run db:push` 或 migration
+- 对破坏性操作准备回滚说明
+
+## 安全建议
+
+- 不要把 Server secrets 暴露到 Web
+- 上传凭证只通过服务端签名生成
+- 生产环境务必配置正确的 CORS / Auth URL
+- 对外公开素材时，优先显式配置 `ASSET_PUBLIC_URL`
+
+## 发布后验证
+
+建议至少做以下 smoke test：
+
+- `GET /` 返回 `OK`
+- Web 首页可访问
+- 登录流程正常
+- `/dashboard` 可读写
+- `/media` 能成功获取签名并上传
+- Caption 单图生成或批量任务可运行
+- `/docs` 可访问

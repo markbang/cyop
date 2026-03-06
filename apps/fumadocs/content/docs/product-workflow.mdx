@@ -1,0 +1,170 @@
+---
+title: 业务工作流
+description: 从需求到数据集、素材、Caption、审核与自动化任务的完整链路
+---
+
+# 业务工作流
+
+`cyop` 的核心不是单个页面，而是一条完整的数据生产链路。
+
+## 总体流程
+
+```txt
+Requirement
+  → Dataset
+    → Media Asset Upload
+      → Caption Job / Caption
+        → Human Review
+          → Automation / Export / Distribution
+```
+
+## 1. 创建需求
+
+入口：`/dashboard`
+
+需求记录的核心字段包括：
+
+- 标题 / 描述
+- Owner / Team
+- Priority / Status
+- 目标图片量
+- AI 覆盖目标
+- 标签提示
+
+对应数据表：`requirements`
+
+## 2. 创建数据集
+
+一个需求可以关联多个数据集。
+
+数据集记录：
+
+- 存储桶
+- 总图片数 / 已处理数 / 待处理数
+- AI Caption 覆盖率
+- Auto Tag 覆盖率
+- Review 覆盖率
+- 关注标签
+
+对应数据表：`datasets`
+
+## 3. 上传素材
+
+入口：`/media`
+
+上传流程：
+
+1. 前端选择数据集
+2. 请求服务端生成预签名上传地址
+3. 浏览器直接 PUT 到对象存储
+4. 服务端 finalize 素材记录
+5. 素材进入平台列表
+
+对应数据表：`media_assets`
+
+相关后端模块：
+
+- `packages/api/src/routers/media.ts`
+- `packages/api/src/services/storage.ts`
+
+## 4. 生成 Caption
+
+有两种常见方式：
+
+### 单图生成
+
+入口：`/todos`
+
+- 输入图片 URL
+- 选择模型或使用默认模型
+- 调用 `captionOps.generate`
+
+### 批量生成
+
+入口：`/todos`
+
+- 选择数据集
+- 创建批处理任务
+- 将素材写入 `caption_jobs`
+- 执行队列生成结果
+
+对应表：
+
+- `ai_models`
+- `prompt_templates`
+- `caption_jobs`
+
+## 5. 审核 Caption
+
+入口：`/editor`
+
+审核台支持：
+
+- 按数据集 / 状态筛选
+- 查看图片预览
+- 编辑最终文案
+- 通过 / 驳回
+- 批量通过
+- 导出 JSON / CSV / TXT
+
+对应数据表：`captions`
+
+状态大致流转：
+
+```txt
+pending → processing → completed → approved
+                           └──────→ rejected
+```
+
+## 6. 自动化任务
+
+入口：`/dashboard`
+
+自动化任务用于追踪：
+
+- caption
+- tag
+- qa
+- distribution
+- ingest
+
+记录内容包括：
+
+- 当前状态
+- 进度
+- 负责人
+- 失败原因
+
+对应数据表：`automation_tasks`
+
+## 7. 标签与洞察
+
+平台会对数据集标签使用情况进行统计，形成基础洞察能力。
+
+对应数据表：`dataset_tags`
+
+## 8. 外部系统联动
+
+如果配置了 `AUTOMATION_WEBHOOK_URL`，任务和数据集事件可以推送到外部自动化系统。
+
+当前已覆盖的事件类型包括：
+
+- `dataset.created`
+- `dataset.metrics_updated`
+- `task.created`
+- `task.updated`
+
+## 你在代码里应该看哪里
+
+| 业务阶段 | 代码入口 |
+| --- | --- |
+| 需求 | `packages/api/src/routers/requirements.ts` |
+| 数据集 | `packages/api/src/routers/datasets.ts` |
+| 素材上传 | `packages/api/src/routers/media.ts` |
+| Caption 审核 | `packages/api/src/routers/captions.ts` |
+| Caption 批处理 | `packages/api/src/routers/caption.ts` |
+| 自动化事件 | `packages/api/src/services/automation.ts` |
+
+## 下一篇
+
+继续阅读：[API 与模块说明](./api-reference)

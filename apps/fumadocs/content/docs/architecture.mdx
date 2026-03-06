@@ -1,0 +1,150 @@
+---
+title: 架构说明
+description: Monorepo 分层、运行时职责与请求链路
+---
+
+# 架构说明
+
+`cyop` 使用 Turborepo 将 Web、Server、Docs 与共享包组织在一个仓库中。
+
+## Monorepo 分层
+
+```txt
+apps/
+├─ web        # React + TanStack Router 控制台
+├─ server     # Bun + Hono + tRPC API
+└─ fumadocs   # Next.js + Fumadocs 文档站
+
+packages/
+├─ api        # tRPC routers + services
+├─ auth       # Better Auth 配置
+├─ db         # Drizzle schema + DB 连接
+├─ ui         # 共享 UI 组件
+└─ config     # TS / Biome 配置
+```
+
+## 各层职责
+
+### `apps/web`
+
+负责：
+
+- 页面渲染与交互
+- TanStack Router 路由组织
+- React Query / tRPC 客户端调用
+- 登录、上传、审核、批处理等 UI
+
+### `apps/server`
+
+负责：
+
+- Hono API 容器
+- 挂载 Better Auth Handler
+- 挂载 tRPC 服务
+- CORS 与日志中间件
+
+入口文件：`apps/server/src/index.ts`
+
+### `packages/api`
+
+负责：
+
+- tRPC routers
+- Caption / Storage / Automation 业务逻辑
+- 后端输入校验与错误处理
+- 与 `@cyop/db` 和 `@cyop/auth` 连接
+
+### `packages/db`
+
+负责：
+
+- Drizzle schema
+- 数据库连接
+- 迁移生成与推送
+
+业务 schema 主文件：`packages/db/src/schema/platform.ts`
+
+### `packages/auth`
+
+负责：
+
+- Better Auth 初始化
+- Drizzle Adapter 绑定
+- trusted origins 与 cookie 相关配置
+
+### `packages/ui`
+
+负责：
+
+- Button / Card / Input / Select 等共享组件
+- Web 与 Docs 共用视觉基础设施
+
+## 请求链路
+
+### 典型前端请求
+
+```txt
+Web Route
+  → React Query / tRPC client
+    → Hono /trpc/*
+      → packages/api router
+        → packages/db / packages/auth / service layer
+          → PostgreSQL / S3 / AI provider
+```
+
+### 认证链路
+
+```txt
+Web Login Form
+  → Better Auth client
+    → server /api/auth/*
+      → packages/auth
+        → auth tables in PostgreSQL
+```
+
+## 数据主线
+
+平台主业务实体：
+
+1. `requirements`
+2. `datasets`
+3. `media_assets`
+4. `captions`
+5. `caption_jobs`
+6. `automation_tasks`
+7. `dataset_tags`
+8. `prompt_templates`
+9. `ai_models`
+
+这些实体构成了从需求管理到 AI 自动化再到人工审核的完整闭环。
+
+## 为什么这样拆分
+
+### 优点
+
+- Web / Server / Docs 职责清晰
+- 共享类型与 UI 可复用
+- 数据模型集中管理
+- 新增模块时更容易定位改动范围
+- Turbo 可以更好地复用缓存与并行任务
+
+### 适合扩展的方向
+
+- 增加新的 AI pipeline（如 tagging / embedding）
+- 接入新的对象存储或 provider
+- 引入后台 worker / queue 系统
+- 为 Docs 自动生成 API / Schema 文档
+
+## 阅读建议
+
+如果你要调试某个问题，可以按这个顺序定位：
+
+- **页面问题**：`apps/web/src/routes/*`
+- **接口问题**：`packages/api/src/routers/*`
+- **第三方调用问题**：`packages/api/src/services/*`
+- **数据字段问题**：`packages/db/src/schema/platform.ts`
+- **登录问题**：`packages/auth/src/index.ts`
+
+## 下一篇
+
+继续阅读：[业务工作流](./product-workflow)

@@ -1,0 +1,137 @@
+---
+title: API 与模块说明
+description: tRPC routers、服务层与数据模型入口总览
+---
+
+# API 与模块说明
+
+后端主要分为两层：
+
+1. **Router 层**：对外提供 tRPC 接口
+2. **Service 层**：封装对象存储、AI 调用、自动化事件等逻辑
+
+## 根路由
+
+文件：`packages/api/src/routers/index.ts`
+
+当前挂载的模块：
+
+| Router Key | 文件 | 说明 |
+| --- | --- | --- |
+| `healthCheck` | `routers/index.ts` | 健康检查 |
+| `todo` | `routers/todo.ts` | 示例数据接口 |
+| `requirement` | `routers/requirements.ts` | 需求 CRUD 与统计 |
+| `dataset` | `routers/datasets.ts` | 数据集创建与指标更新 |
+| `task` | `routers/tasks.ts` | 自动化任务管理 |
+| `tag` | `routers/tags.ts` | 标签列表与统计 |
+| `media` | `routers/media.ts` | 上传签名、素材列表、删除 |
+| `caption` | `routers/captions.ts` | 审核流、导出、批量通过 / 驳回 |
+| `captionOps` | `routers/caption.ts` | 单图生成、批量任务入队 / 执行 |
+| `prompt` | `routers/prompts.ts` | Prompt 模板管理 |
+| `model` | `routers/models.ts` | AI 模型管理 |
+
+## Service 层
+
+| 文件 | 作用 |
+| --- | --- |
+| `services/storage.ts` | S3 兼容存储签名、删除、公共 URL 组装 |
+| `services/caption.ts` | Caption 模型调用封装 |
+| `services/openai.ts` | 批量 caption 生成辅助逻辑 |
+| `services/captionWorker.ts` | 批量处理 `captions` 队列 |
+| `services/automation.ts` | 自动化 webhook 事件推送 |
+
+## 认证与上下文
+
+### 认证
+
+文件：`packages/auth/src/index.ts`
+
+使用 **Better Auth** + Drizzle Adapter。
+
+### tRPC Context
+
+文件：`packages/api/src/context.ts`
+
+每次请求会从 Better Auth 中解析 session，并注入到 tRPC context。
+
+## Server 挂载方式
+
+入口：`apps/server/src/index.ts`
+
+服务暴露两个关键入口：
+
+- `/api/auth/*`：Better Auth handler
+- `/trpc/*`：tRPC handler
+
+以及健康检查：
+
+- `/` → `OK`
+
+## 数据模型入口
+
+业务 schema 文件：`packages/db/src/schema/platform.ts`
+
+主要表：
+
+| 表名 | 作用 |
+| --- | --- |
+| `requirements` | 业务需求 |
+| `datasets` | 数据集 |
+| `automation_tasks` | 自动化任务 |
+| `dataset_tags` | 数据集标签 |
+| `media_assets` | 素材资产 |
+| `prompt_templates` | Prompt 模板 |
+| `captions` | Caption 审核记录 |
+| `ai_models` | 模型注册表 |
+| `caption_jobs` | Caption 批处理任务 |
+
+认证相关 schema：`packages/db/src/schema/auth.ts`
+
+## 前端调用入口
+
+Web 侧主要通过：
+
+- `apps/web/src/utils/trpc.ts`
+- `@tanstack/react-query`
+
+来调用后端接口。
+
+## 调试建议
+
+### 看页面行为
+
+先找：
+
+- `apps/web/src/routes/*.tsx`
+
+### 看接口行为
+
+再找：
+
+- `packages/api/src/routers/*.ts`
+
+### 看第三方依赖调用
+
+再找：
+
+- `packages/api/src/services/*.ts`
+
+### 看字段定义
+
+最后找：
+
+- `packages/db/src/schema/platform.ts`
+
+## 常见定位路径
+
+| 问题类型 | 优先查看 |
+| --- | --- |
+| 登录失败 | `packages/auth/src/index.ts`、`apps/server/src/index.ts` |
+| 上传失败 | `routers/media.ts`、`services/storage.ts` |
+| Caption 生成失败 | `routers/caption.ts`、`services/caption.ts` |
+| 审核台状态异常 | `routers/captions.ts`、`routes/editor.lazy.tsx` |
+| 统计看板不对 | `routers/requirements.ts`、`routes/dashboard.lazy.tsx` |
+
+## 下一篇
+
+继续阅读：[部署说明](./deployment)
