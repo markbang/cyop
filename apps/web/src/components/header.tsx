@@ -4,14 +4,14 @@ import { ModeToggle } from "./mode-toggle";
 
 const UserMenu = lazy(() => import("./user-menu"));
 
-export default function Header() {
-	const links = [
-		{ to: "/", label: "概览" },
-		{ to: "/dashboard", label: "控制塔" },
-		{ to: "/media", label: "素材库" },
-		{ to: "/todos", label: "AI模型与批处理" },
-	] as const;
+const links = [
+	{ to: "/", label: "概览" },
+	{ to: "/dashboard", label: "控制塔" },
+	{ to: "/media", label: "素材库" },
+	{ to: "/todos", label: "AI模型与批处理" },
+] as const;
 
+export default function Header() {
 	return (
 		<header className="border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 			<div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">

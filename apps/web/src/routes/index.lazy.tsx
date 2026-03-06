@@ -10,13 +10,11 @@ import {
 import { Progress } from "@cyop/ui/components/progress";
 import { useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute, Link } from "@tanstack/react-router";
-import {
-	ArrowRight,
-	Layers,
-	ShieldCheck,
-	Sparkles,
-	Users2,
-} from "lucide-react";
+import ArrowRight from "lucide-react/icons/arrow-right";
+import Layers from "lucide-react/icons/layers";
+import ShieldCheck from "lucide-react/icons/shield-check";
+import Sparkles from "lucide-react/icons/sparkles";
+import Users2 from "lucide-react/icons/users-2";
 import { trpc } from "@/utils/trpc";
 
 export const Route = createLazyFileRoute("/")({

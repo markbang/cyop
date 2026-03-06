@@ -3,7 +3,7 @@ import { Input } from "@cyop/ui/components/input";
 import { Label } from "@cyop/ui/components/label";
 import { useNavigate } from "@tanstack/react-router";
 import type { ChangeEvent, FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import Loader from "./loader";
@@ -27,15 +27,12 @@ export default function SignInForm({
 	}>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const canSubmit = useMemo(() => {
-		const email = formData.email.trim();
-		return (
-			email.length > 0 &&
-			email.includes("@") &&
-			formData.password.length >= 8 &&
-			!isSubmitting
-		);
-	}, [formData, isSubmitting]);
+	const email = formData.email.trim();
+	const canSubmit =
+		email.length > 0 &&
+		email.includes("@") &&
+		formData.password.length >= 8 &&
+		!isSubmitting;
 
 	const validate = () => {
 		const errors: { email?: string; password?: string } = {};

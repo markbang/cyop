@@ -5,7 +5,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@cyop/ui/components/dropdown-menu";
-import { Moon, Sun } from "lucide-react";
+import Moon from "lucide-react/icons/moon";
+import Sun from "lucide-react/icons/sun";
 import { useTheme } from "@/components/theme-provider";
 
 export function ModeToggle() {

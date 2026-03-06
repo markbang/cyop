@@ -83,17 +83,23 @@ export const captionRouter = router({
 				}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			const model = await resolveModel(input.modelId);
 			let imageUrl = input.imageUrl;
 			let datasetId: number | null = null;
 			let assetId: number | null = null;
 
+			const [model, asset] = await Promise.all([
+				resolveModel(input.modelId),
+				input.assetId
+					? db
+							.select()
+							.from(mediaAssets)
+							.where(eq(mediaAssets.id, input.assetId))
+							.limit(1)
+							.then(([row]) => row)
+					: Promise.resolve(undefined),
+			]);
+
 			if (input.assetId) {
-				const [asset] = await db
-					.select()
-					.from(mediaAssets)
-					.where(eq(mediaAssets.id, input.assetId))
-					.limit(1);
 				if (!asset) {
 					throw new TRPCError({ code: "NOT_FOUND", message: "素材不存在" });
 				}
@@ -151,7 +157,6 @@ export const captionRouter = router({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			const model = await resolveModel(input.modelId);
 			const conditions = [eq(mediaAssets.datasetId, input.datasetId)];
 			const allowedStatuses: Array<(typeof mediaStatusValues)[number]> = [
 				"uploaded",
@@ -162,11 +167,14 @@ export const captionRouter = router({
 				input.statusFilter ? [input.statusFilter] : allowedStatuses;
 			conditions.push(inArray(mediaAssets.status, filter));
 
-			const assets = await db
-				.select()
-				.from(mediaAssets)
-				.where(and(...conditions))
-				.limit(input.limit);
+			const [model, assets] = await Promise.all([
+				resolveModel(input.modelId),
+				db
+					.select()
+					.from(mediaAssets)
+					.where(and(...conditions))
+					.limit(input.limit),
+			]);
 
 			if (!assets.length) {
 				throw new TRPCError({
@@ -245,6 +253,19 @@ export const captionRouter = router({
 			let skippedLocked = 0;
 
 			const jobs = [...queuedJobs];
+			type ResolvedModel = Awaited<ReturnType<typeof resolveModel>>;
+			const modelPromises = new Map<number, Promise<ResolvedModel>>();
+			const getResolvedModel = (modelId?: number | null) => {
+				const cacheKey = modelId ?? input?.modelId ?? 0;
+				const existingPromise = modelPromises.get(cacheKey);
+				if (existingPromise) {
+					return existingPromise;
+				}
+
+				const nextPromise = resolveModel(modelId ?? input?.modelId);
+				modelPromises.set(cacheKey, nextPromise);
+				return nextPromise;
+			};
 
 			const runWorker = async () => {
 				while (jobs.length > 0) {
@@ -278,7 +299,7 @@ export const captionRouter = router({
 							throw new Error("任务缺少 imageUrl");
 						}
 
-						const model = await resolveModel(job.modelId ?? input?.modelId);
+						const model = await getResolvedModel(job.modelId);
 						const result = await generateCaption({
 							imageUrl: job.imageUrl,
 							prompt: job.prompt ?? undefined,
@@ -414,28 +435,30 @@ export const captionRouter = router({
 			const pageSize = input?.pageSize ?? 50;
 			const offset = (page - 1) * pageSize;
 
-			const [countRow] = await db
-				.select({ total: sql<number>`count(*)::int` })
-				.from(captionJobs)
-				.where(conditions.length ? and(...conditions) : undefined);
+			const [countResult, rows] = await Promise.all([
+				db
+					.select({ total: sql<number>`count(*)::int` })
+					.from(captionJobs)
+					.where(conditions.length ? and(...conditions) : undefined),
+				db
+					.select({
+						job: captionJobs,
+						asset: mediaAssets,
+						dataset: datasets,
+						model: aiModels,
+					})
+					.from(captionJobs)
+					.leftJoin(mediaAssets, eq(captionJobs.assetId, mediaAssets.id))
+					.leftJoin(datasets, eq(captionJobs.datasetId, datasets.id))
+					.leftJoin(aiModels, eq(captionJobs.modelId, aiModels.id))
+					.where(conditions.length ? and(...conditions) : undefined)
+					.orderBy(desc(captionJobs.updatedAt))
+					.limit(pageSize)
+					.offset(offset),
+			]);
+			const [countRow] = countResult;
 			const total = countRow?.total ?? 0;
 			const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
-
-			const rows = await db
-				.select({
-					job: captionJobs,
-					asset: mediaAssets,
-					dataset: datasets,
-					model: aiModels,
-				})
-				.from(captionJobs)
-				.leftJoin(mediaAssets, eq(captionJobs.assetId, mediaAssets.id))
-				.leftJoin(datasets, eq(captionJobs.datasetId, datasets.id))
-				.leftJoin(aiModels, eq(captionJobs.modelId, aiModels.id))
-				.where(conditions.length ? and(...conditions) : undefined)
-				.orderBy(desc(captionJobs.updatedAt))
-				.limit(pageSize)
-				.offset(offset);
 
 			return {
 				items: rows.map(({ job, asset, dataset, model }) => ({

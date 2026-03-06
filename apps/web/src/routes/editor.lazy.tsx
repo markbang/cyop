@@ -4,22 +4,20 @@ import { Select } from "@cyop/ui/components/select";
 import { Textarea } from "@cyop/ui/components/textarea";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute } from "@tanstack/react-router";
-import {
-	Check,
-	CheckCircle2,
-	ChevronLeft,
-	ChevronRight,
-	Download,
-	Filter,
-	Image as ImageIcon,
-	Loader2,
-	RefreshCw,
-	RotateCcw,
-	ThumbsDown,
-	ThumbsUp,
-} from "lucide-react";
+import Check from "lucide-react/icons/check";
+import CheckCircle2 from "lucide-react/icons/check-circle-2";
+import ChevronLeft from "lucide-react/icons/chevron-left";
+import ChevronRight from "lucide-react/icons/chevron-right";
+import Download from "lucide-react/icons/download";
+import Filter from "lucide-react/icons/filter";
+import ImageIcon from "lucide-react/icons/image";
+import Loader2 from "lucide-react/icons/loader-2";
+import RefreshCw from "lucide-react/icons/refresh-cw";
+import RotateCcw from "lucide-react/icons/rotate-ccw";
+import ThumbsDown from "lucide-react/icons/thumbs-down";
+import ThumbsUp from "lucide-react/icons/thumbs-up";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { trpc, trpcClient } from "@/utils/trpc";
 
 export const Route = createLazyFileRoute("/editor")({
@@ -161,43 +159,67 @@ function EditorView() {
 		}
 	};
 
+	const captions = captionsQuery.data ?? [];
+	const selectedCaption = captions.find((caption) => caption.id === selectedId);
+	const rejectedCaptionIds = captions
+		.filter((caption) => caption.status === "rejected")
+		.map((caption) => caption.id);
+	const approvableCaptionIds = captions
+		.filter(
+			(caption) =>
+				caption.status === "completed" || caption.status === "pending",
+		)
+		.map((caption) => caption.id);
+	const selectedIndex = selectedId
+		? captions.findIndex((caption) => caption.id === selectedId)
+		: -1;
+
+	const resetSelection = () => {
+		setSelectedId(null);
+		setEditValue("");
+	};
+
+	const selectCaption = (captionId: number) => {
+		const caption = captions.find((item) => item.id === captionId);
+		setSelectedId(captionId);
+		setEditValue(caption?.manualCaption || caption?.aiCaption || "");
+	};
+
+	const selectNext = () => {
+		if (selectedIndex === -1 || captions.length === 0) {
+			return;
+		}
+
+		const nextCaption = captions[selectedIndex + 1] ?? captions[0];
+		if (!nextCaption) {
+			resetSelection();
+			return;
+		}
+
+		selectCaption(nextCaption.id);
+	};
+
+	const selectPrevious = () => {
+		if (selectedIndex <= 0) {
+			return;
+		}
+
+		const previousCaption = captions[selectedIndex - 1];
+		if (!previousCaption) {
+			return;
+		}
+
+		selectCaption(previousCaption.id);
+	};
+
 	const handleRegenerate = () => {
 		if (!selectedId) return;
 		regenerateMutation.mutate({ ids: [selectedId] });
 	};
 
 	const handleBatchRegenerate = () => {
-		const rejectedIds = captions
-			.filter((c) => c.status === "rejected")
-			.map((c) => c.id);
-		if (rejectedIds.length === 0) return;
-		regenerateMutation.mutate({ ids: rejectedIds });
-	};
-
-	const captions = captionsQuery.data ?? [];
-	const selectedCaption = useMemo(
-		() => captions.find((c) => c.id === selectedId),
-		[captions, selectedId],
-	);
-
-	useEffect(() => {
-		if (selectedCaption) {
-			setEditValue(
-				selectedCaption.manualCaption || selectedCaption.aiCaption || "",
-			);
-		}
-	}, [selectedCaption]);
-
-	const selectNext = () => {
-		if (!selectedId || captions.length === 0) return;
-		const currentIndex = captions.findIndex((c) => c.id === selectedId);
-		if (currentIndex < captions.length - 1) {
-			setSelectedId(captions[currentIndex + 1].id);
-		} else if (captions.length > 0) {
-			setSelectedId(captions[0].id);
-		} else {
-			setSelectedId(null);
-		}
+		if (rejectedCaptionIds.length === 0) return;
+		regenerateMutation.mutate({ ids: rejectedCaptionIds });
 	};
 
 	const handleSave = () => {
@@ -220,11 +242,8 @@ function EditorView() {
 	};
 
 	const handleBatchApprove = () => {
-		const pendingIds = captions
-			.filter((c) => c.status === "completed" || c.status === "pending")
-			.map((c) => c.id);
-		if (pendingIds.length === 0) return;
-		batchApproveMutation.mutate({ ids: pendingIds });
+		if (approvableCaptionIds.length === 0) return;
+		batchApproveMutation.mutate({ ids: approvableCaptionIds });
 	};
 
 	return (
@@ -244,9 +263,10 @@ function EditorView() {
 						<div className="flex items-center gap-2">
 							<Select
 								value={datasetId}
-								onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-									setDatasetId(e.target.value)
-								}
+								onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+									resetSelection();
+									setDatasetId(e.target.value);
+								}}
 								className="h-9 w-[180px] border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:ring-blue-900"
 							>
 								<option value="">所有数据集</option>
@@ -259,9 +279,10 @@ function EditorView() {
 
 							<Select
 								value={statusFilter}
-								onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-									setStatusFilter(e.target.value)
-								}
+								onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+									resetSelection();
+									setStatusFilter(e.target.value);
+								}}
 								className="h-9 w-[140px] border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:ring-blue-900"
 							>
 								<option value="">所有状态</option>
@@ -297,7 +318,10 @@ function EditorView() {
 								size="sm"
 								variant="secondary"
 								onClick={handleBatchApprove}
-								disabled={batchApproveMutation.isPending}
+								disabled={
+									batchApproveMutation.isPending ||
+									approvableCaptionIds.length === 0
+								}
 								className="h-9 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
 							>
 								<CheckCircle2 className="mr-2 size-4 text-blue-600 dark:text-blue-400" />
@@ -310,7 +334,7 @@ function EditorView() {
 								onClick={handleBatchRegenerate}
 								disabled={
 									regenerateMutation.isPending ||
-									captions.filter((c) => c.status === "rejected").length === 0
+									rejectedCaptionIds.length === 0
 								}
 								className="h-9 border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
 							>
@@ -386,7 +410,7 @@ function EditorView() {
 									<button
 										type="button"
 										key={caption.id}
-										onClick={() => setSelectedId(caption.id)}
+										onClick={() => selectCaption(caption.id)}
 										className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
 											selectedId === caption.id
 												? "border-blue-200 bg-blue-50/50 shadow-sm ring-1 ring-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:ring-blue-900/30"
@@ -423,9 +447,13 @@ function EditorView() {
 													caption.aiCaption ||
 													"暂无描述..."}
 											</p>
-											<span className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+											<time
+												className="mt-1 text-[10px] text-slate-400 dark:text-slate-500"
+												dateTime={new Date(caption.updatedAt).toISOString()}
+												suppressHydrationWarning
+											>
 												{new Date(caption.updatedAt).toLocaleDateString()}
-											</span>
+											</time>
 										</div>
 									</button>
 								))
@@ -473,7 +501,7 @@ function EditorView() {
 												置信度
 											</span>
 											<span className="font-medium text-slate-700 dark:text-slate-300">
-												{selectedCaption.confidence
+												{selectedCaption.confidence != null
 													? `${Math.round(selectedCaption.confidence * 100)}%`
 													: "N/A"}
 											</span>
@@ -602,18 +630,8 @@ function EditorView() {
 													variant="ghost"
 													size="icon"
 													className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
-													onClick={() => {
-														const currentIndex = captions.findIndex(
-															(c) => c.id === selectedId,
-														);
-														if (currentIndex > 0) {
-															setSelectedId(captions[currentIndex - 1].id);
-														}
-													}}
-													disabled={
-														!selectedId ||
-														captions.findIndex((c) => c.id === selectedId) <= 0
-													}
+													onClick={selectPrevious}
+													disabled={selectedIndex <= 0}
 												>
 													<ChevronLeft className="size-4" />
 												</Button>
@@ -623,9 +641,8 @@ function EditorView() {
 													className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
 													onClick={selectNext}
 													disabled={
-														!selectedId ||
-														captions.findIndex((c) => c.id === selectedId) >=
-															captions.length - 1
+														selectedIndex === -1 ||
+														selectedIndex >= captions.length - 1
 													}
 												>
 													<ChevronRight className="size-4" />

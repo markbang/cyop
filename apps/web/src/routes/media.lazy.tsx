@@ -11,14 +11,12 @@ import { Input } from "@cyop/ui/components/input";
 import { Select } from "@cyop/ui/components/select";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute } from "@tanstack/react-router";
-import {
-	CheckCircle2,
-	Clipboard,
-	Images,
-	Loader2,
-	Trash2,
-	Upload,
-} from "lucide-react";
+import CheckCircle2 from "lucide-react/icons/check-circle-2";
+import Clipboard from "lucide-react/icons/clipboard";
+import Images from "lucide-react/icons/images";
+import Loader2 from "lucide-react/icons/loader-2";
+import Trash2 from "lucide-react/icons/trash-2";
+import Upload from "lucide-react/icons/upload";
 import { type ChangeEvent, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/utils/trpc";
@@ -52,9 +50,6 @@ function MediaLibrary() {
 	);
 	const finalizeUpload = useMutation(
 		trpc.media.finalizeUpload.mutationOptions({
-			onSuccess: () => {
-				mediaQuery.refetch();
-			},
 			onError: (error) => {
 				toast.error(error.message);
 			},
@@ -89,13 +84,16 @@ function MediaLibrary() {
 		if (!files?.length) {
 			return;
 		}
-		for (const file of Array.from(files)) {
-			await processUpload(file);
-		}
+
+		const datasetId = Number(selectedDataset);
+		await Promise.all(
+			Array.from(files).map((file) => processUpload(file, datasetId)),
+		);
+		await mediaQuery.refetch();
 		event.target.value = "";
 	};
 
-	const processUpload = async (file: File) => {
+	const processUpload = async (file: File, datasetId: number) => {
 		const entryId = crypto.randomUUID();
 		setUploads((prev) => [
 			{
@@ -107,13 +105,14 @@ function MediaLibrary() {
 		]);
 		try {
 			const uploadRequest = await requestUpload.mutateAsync({
-				datasetId: Number(selectedDataset),
+				datasetId,
 				fileName: file.name,
 				mimeType: file.type,
 				size: file.size,
 			});
 			updateUpload(entryId, "uploading");
 
+			const dimensionsPromise = readImageDimensions(file);
 			const response = await fetch(uploadRequest.upload.url, {
 				method: "PUT",
 				headers: uploadRequest.upload.headers,
@@ -125,7 +124,7 @@ function MediaLibrary() {
 
 			updateUpload(entryId, "finalizing");
 
-			const dimensions = await readImageDimensions(file);
+			const dimensions = await dimensionsPromise;
 
 			await finalizeUpload.mutateAsync({
 				assetId: uploadRequest.asset.id,
@@ -173,7 +172,9 @@ function MediaLibrary() {
 		deleteMedia.mutate({ assetId, removeFromStorage: true });
 	};
 
-	const isUploading = requestUpload.isPending || finalizeUpload.isPending;
+	const isUploading = uploads.some(
+		(upload) => upload.status !== "done" && upload.status !== "error",
+	);
 
 	return (
 		<div className="h-full overflow-y-auto bg-muted/10">
@@ -322,6 +323,8 @@ function MediaLibrary() {
 												src={asset.publicUrl}
 												alt={asset.originalName}
 												className="h-full w-full object-cover"
+												loading="lazy"
+												decoding="async"
 											/>
 										) : (
 											<div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -345,7 +348,7 @@ function MediaLibrary() {
 											{asset.dataset?.name ?? "未关联数据集"}
 										</p>
 										<div className="flex items-center gap-2 text-muted-foreground text-xs">
-											{asset.width && asset.height ? (
+											{asset.width != null && asset.height != null ? (
 												<span>
 													{asset.width} × {asset.height}
 												</span>

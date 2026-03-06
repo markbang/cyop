@@ -1,4 +1,4 @@
-import { CheckIcon } from "lucide-react";
+import CheckIcon from "lucide-react/icons/check";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
 import type * as React from "react";
 

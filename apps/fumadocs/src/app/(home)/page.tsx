@@ -1,12 +1,12 @@
+import { Badge } from "@cyop/ui/components/badge";
+import { Button } from "@cyop/ui/components/button";
 import {
-	Badge,
-	Button,
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@cyop/ui";
+} from "@cyop/ui/components/card";
 import Link from "next/link";
 
 export default function HomePage() {

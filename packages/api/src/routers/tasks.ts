@@ -69,7 +69,7 @@ export const tasksRouter = router({
 			if (!record) {
 				throw new Error("Failed to create automation task");
 			}
-			await publishAutomationEvent({
+			void publishAutomationEvent({
 				type: "task.created",
 				taskId: record.id,
 				datasetId: record.datasetId,
@@ -114,7 +114,7 @@ export const tasksRouter = router({
 			if (!record) {
 				throw new Error("Failed to update automation task");
 			}
-			await publishAutomationEvent({
+			void publishAutomationEvent({
 				type: "task.updated",
 				taskId: record.id,
 				datasetId: record.datasetId,

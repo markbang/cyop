@@ -65,7 +65,7 @@ export const datasetsRouter = router({
 			if (!record) {
 				throw new Error("Failed to create dataset");
 			}
-			await publishAutomationEvent({
+			void publishAutomationEvent({
 				type: "dataset.created",
 				datasetId: record.id,
 				requirementId: record.requirementId,
@@ -111,7 +111,7 @@ export const datasetsRouter = router({
 			if (!record) {
 				throw new Error("Failed to update dataset metrics");
 			}
-			await publishAutomationEvent({
+			void publishAutomationEvent({
 				type: "dataset.metrics_updated",
 				datasetId: record.id,
 				imageCount: record.imageCount,

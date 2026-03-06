@@ -12,8 +12,11 @@ import { Label } from "@cyop/ui/components/label";
 import { Textarea } from "@cyop/ui/components/textarea";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
-import { type ChangeEvent, type FormEvent, useMemo, useState } from "react";
+import Loader2 from "lucide-react/icons/loader-2";
+import RefreshCw from "lucide-react/icons/refresh-cw";
+import Sparkles from "lucide-react/icons/sparkles";
+import Trash2 from "lucide-react/icons/trash-2";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 import { trpc } from "@/utils/trpc";
@@ -131,13 +134,9 @@ function AiOps() {
 		}),
 	);
 
-	const selectedModelId = useMemo(() => {
-		if (batchModel) {
-			return Number(batchModel);
-		}
-		const defaultModel = models.data?.find((model) => model.defaultModel);
-		return defaultModel?.id;
-	}, [batchModel, models.data]);
+	const selectedModelId = batchModel
+		? Number(batchModel)
+		: models.data?.find((model) => model.defaultModel)?.id;
 
 	const handleModelSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -550,11 +549,17 @@ function AiOps() {
 										{job.caption?.slice(0, 120) ?? job.error}
 									</p>
 								</div>
-								<div className="text-muted-foreground text-xs">
+								<time
+									className="text-muted-foreground text-xs"
+									dateTime={new Date(
+										job.completedAt ?? job.createdAt,
+									).toISOString()}
+									suppressHydrationWarning
+								>
 									{job.completedAt
 										? new Date(job.completedAt).toLocaleString()
 										: new Date(job.createdAt).toLocaleString()}
-								</div>
+								</time>
 							</div>
 						))
 					) : (

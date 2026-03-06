@@ -357,25 +357,27 @@ export const captionsRouter = router({
 				conditions.push(inArray(mediaAssets.id, input.mediaAssetIds));
 			}
 
-			const assets = await db
-				.select({ id: mediaAssets.id })
-				.from(mediaAssets)
-				.leftJoin(captions, eq(captions.mediaAssetId, mediaAssets.id))
-				.where(and(...conditions, isNull(captions.id)));
+			const [assets, defaultTemplate] = await Promise.all([
+				db
+					.select({ id: mediaAssets.id })
+					.from(mediaAssets)
+					.leftJoin(captions, eq(captions.mediaAssetId, mediaAssets.id))
+					.where(and(...conditions, isNull(captions.id))),
+				input.promptTemplateId
+					? Promise.resolve(undefined)
+					: db
+							.select({ id: promptTemplates.id })
+							.from(promptTemplates)
+							.where(eq(promptTemplates.isDefault, true))
+							.limit(1)
+							.then(([template]) => template),
+			]);
 
 			if (assets.length === 0) {
 				return { queued: 0 };
 			}
 
-			let templateId = input.promptTemplateId;
-			if (!templateId) {
-				const [defaultTemplate] = await db
-					.select({ id: promptTemplates.id })
-					.from(promptTemplates)
-					.where(eq(promptTemplates.isDefault, true))
-					.limit(1);
-				templateId = defaultTemplate?.id;
-			}
+			const templateId = input.promptTemplateId ?? defaultTemplate?.id;
 
 			const now = new Date();
 			const captionRecords = assets.map((asset) => ({
@@ -391,7 +393,7 @@ export const captionsRouter = router({
 				.values(captionRecords)
 				.returning({ id: captions.id, mediaAssetId: captions.mediaAssetId });
 
-			await publishAutomationEvent({
+			void publishAutomationEvent({
 				type: "task.created",
 				taskId: 0,
 				datasetId: input.datasetId,

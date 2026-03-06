@@ -60,28 +60,37 @@ export async function processPendingCaptions(
 		}));
 
 	const results = await generateCaptionsBatch(jobs, concurrency);
-	const errors: Array<{ captionId: number; error: string }> = [];
-	let succeeded = 0;
-	let failed = 0;
+	const errors = results
+		.filter((result) => !result.success || !result.caption)
+		.map((result) => ({
+			captionId: result.captionId,
+			error: result.error || "Unknown error",
+		}));
+	const succeeded = results.filter(
+		(result) => result.success && Boolean(result.caption),
+	).length;
+	const failed = results.length - succeeded;
 
-	for (const result of results) {
-		if (result.success && result.caption) {
-			await db
-				.update(captions)
-				.set({
-					aiCaption: result.caption,
-					finalCaption: result.caption,
-					status: "completed",
-					model: result.model,
-					confidence: result.confidence,
-					tokensUsed: result.tokensUsed,
-					generatedAt: new Date(),
-					updatedAt: new Date(),
-				})
-				.where(eq(captions.id, result.captionId));
-			succeeded++;
-		} else {
-			await db
+	await Promise.all(
+		results.map((result) => {
+			if (result.success && result.caption) {
+				const completedAt = new Date();
+				return db
+					.update(captions)
+					.set({
+						aiCaption: result.caption,
+						finalCaption: result.caption,
+						status: "completed",
+						model: result.model,
+						confidence: result.confidence,
+						tokensUsed: result.tokensUsed,
+						generatedAt: completedAt,
+						updatedAt: completedAt,
+					})
+					.where(eq(captions.id, result.captionId));
+			}
+
+			return db
 				.update(captions)
 				.set({
 					status: "rejected",
@@ -89,13 +98,8 @@ export async function processPendingCaptions(
 					updatedAt: new Date(),
 				})
 				.where(eq(captions.id, result.captionId));
-			failed++;
-			errors.push({
-				captionId: result.captionId,
-				error: result.error || "Unknown error",
-			});
-		}
-	}
+		}),
+	);
 
 	return {
 		processed: results.length,

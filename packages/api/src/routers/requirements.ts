@@ -86,25 +86,62 @@ export const requirementsRouter = router({
 			db.select().from(automationTasks),
 		]);
 
-		const statusBreakdown = requirementStatusValues.map((status) => ({
-			status,
-			count: requirementRows.filter((req) => req.status === status).length,
-		}));
+		const requirementStatusCounts = Object.fromEntries(
+			requirementStatusValues.map((status) => [status, 0]),
+		) as Record<(typeof requirementStatusValues)[number], number>;
+		let urgentRequirements = 0;
+		let blockedRequirements = 0;
 
-		const automationSuccessDenominator = taskRows.filter((task) =>
-			["succeeded", "failed"].includes(task.status),
-		).length;
-		const automationSuccessNumerator = taskRows.filter(
-			(task) => task.status === "succeeded",
-		).length;
+		for (const requirement of requirementRows) {
+			requirementStatusCounts[requirement.status] += 1;
+			if (requirement.priority === "urgent") {
+				urgentRequirements += 1;
+			}
+			if (requirement.status === "blocked") {
+				blockedRequirements += 1;
+			}
+		}
 
-		const average = (values: number[]) => {
-			if (values.length === 0) {
+		let automationSuccessDenominator = 0;
+		let automationSuccessNumerator = 0;
+		let runningTasks = 0;
+		let blockedTasks = 0;
+
+		for (const task of taskRows) {
+			switch (task.status) {
+				case "succeeded":
+					automationSuccessDenominator += 1;
+					automationSuccessNumerator += 1;
+					break;
+				case "failed":
+					automationSuccessDenominator += 1;
+					break;
+				case "running":
+					runningTasks += 1;
+					break;
+				case "blocked":
+					blockedTasks += 1;
+					break;
+				default:
+					break;
+			}
+		}
+
+		let totalAiCaptionCoverage = 0;
+		let totalAutoTagCoverage = 0;
+		let totalReviewCoverage = 0;
+
+		for (const dataset of datasetRows) {
+			totalAiCaptionCoverage += dataset.aiCaptionCoverage;
+			totalAutoTagCoverage += dataset.autoTagCoverage;
+			totalReviewCoverage += dataset.reviewCoverage;
+		}
+
+		const average = (total: number, count: number) => {
+			if (count === 0) {
 				return 0;
 			}
-			return Math.round(
-				values.reduce((sum, value) => sum + value, 0) / values.length,
-			);
+			return Math.round(total / count);
 		};
 
 		return {
@@ -113,11 +150,14 @@ export const requirementsRouter = router({
 				datasets: datasetRows.length,
 				automationTasks: taskRows.length,
 			},
-			statusBreakdown,
+			statusBreakdown: requirementStatusValues.map((status) => ({
+				status,
+				count: requirementStatusCounts[status],
+			})),
 			coverage: {
-				aiCaption: average(datasetRows.map((row) => row.aiCaptionCoverage)),
-				autoTag: average(datasetRows.map((row) => row.autoTagCoverage)),
-				review: average(datasetRows.map((row) => row.reviewCoverage)),
+				aiCaption: average(totalAiCaptionCoverage, datasetRows.length),
+				autoTag: average(totalAutoTagCoverage, datasetRows.length),
+				review: average(totalReviewCoverage, datasetRows.length),
 			},
 			automation: {
 				successRate:
@@ -127,14 +167,12 @@ export const requirementsRouter = router({
 								(automationSuccessNumerator / automationSuccessDenominator) *
 									100,
 							),
-				running: taskRows.filter((task) => task.status === "running").length,
-				blocked: taskRows.filter((task) => task.status === "blocked").length,
+				running: runningTasks,
+				blocked: blockedTasks,
 			},
 			alerts: {
-				urgent: requirementRows.filter((req) => req.priority === "urgent")
-					.length,
-				blocked: requirementRows.filter((req) => req.status === "blocked")
-					.length,
+				urgent: urgentRequirements,
+				blocked: blockedRequirements,
 			},
 		};
 	}),

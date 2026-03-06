@@ -13,22 +13,20 @@ import { Select } from "@cyop/ui/components/select";
 import { Textarea } from "@cyop/ui/components/textarea";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute } from "@tanstack/react-router";
-import {
-	AlertTriangle,
-	CheckCircle2,
-	ChevronRight,
-	ClipboardList,
-	Database,
-	Layers,
-	LayoutDashboard,
-	Loader2,
-	Play,
-	Plus,
-	RefreshCcw,
-	Sparkles,
-	Tag,
-	Users2,
-} from "lucide-react";
+import AlertTriangle from "lucide-react/icons/alert-triangle";
+import CheckCircle2 from "lucide-react/icons/check-circle-2";
+import ChevronRight from "lucide-react/icons/chevron-right";
+import ClipboardList from "lucide-react/icons/clipboard-list";
+import Database from "lucide-react/icons/database";
+import Layers from "lucide-react/icons/layers";
+import LayoutDashboard from "lucide-react/icons/layout-dashboard";
+import Loader2 from "lucide-react/icons/loader-2";
+import Play from "lucide-react/icons/play";
+import Plus from "lucide-react/icons/plus";
+import RefreshCcw from "lucide-react/icons/refresh-ccw";
+import Sparkles from "lucide-react/icons/sparkles";
+import Tag from "lucide-react/icons/tag";
+import Users2 from "lucide-react/icons/users-2";
 import type { ChangeEvent, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { trpc } from "@/utils/trpc";
@@ -46,6 +44,7 @@ const statusOrder = [
 	"completed",
 	"blocked",
 ] as const;
+const statusOrderSet = new Set(statusOrder);
 
 const statusCopy: Record<
 	(typeof statusOrder)[number],
@@ -133,6 +132,36 @@ function DashboardView() {
 		assignedTo: "",
 	});
 
+	const updateFormState = <K extends keyof typeof formState>(
+		key: K,
+		value: (typeof formState)[K],
+	) => {
+		setFormState((prev) => ({
+			...prev,
+			[key]: value,
+		}));
+	};
+
+	const updateDatasetForm = <K extends keyof typeof datasetForm>(
+		key: K,
+		value: (typeof datasetForm)[K],
+	) => {
+		setDatasetForm((prev) => ({
+			...prev,
+			[key]: value,
+		}));
+	};
+
+	const updateTaskForm = <K extends keyof typeof taskForm>(
+		key: K,
+		value: (typeof taskForm)[K],
+	) => {
+		setTaskForm((prev) => ({
+			...prev,
+			[key]: value,
+		}));
+	};
+
 	const requirementQuery = useQuery(trpc.requirement.list.queryOptions());
 	const statsQuery = useQuery(trpc.requirement.stats.queryOptions());
 	const datasetQuery = useQuery(trpc.dataset.list.queryOptions());
@@ -219,7 +248,7 @@ function DashboardView() {
 		);
 
 		requirements.forEach((item) => {
-			if (statusOrder.includes(item.status as (typeof statusOrder)[number])) {
+			if (statusOrderSet.has(item.status as (typeof statusOrder)[number])) {
 				groups[item.status as (typeof statusOrder)[number]].push(item);
 			} else {
 				groups.intake.push(item);
@@ -690,7 +719,7 @@ function DashboardView() {
 											className="border-slate-200 focus:border-blue-500 focus:ring-blue-100"
 											value={formState.title}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
-												setFormState({ ...formState, title: e.target.value })
+												updateFormState("title", e.target.value)
 											}
 										/>
 										<Textarea
@@ -699,10 +728,7 @@ function DashboardView() {
 											className="min-h-[80px] border-slate-200 focus:border-blue-500 focus:ring-blue-100"
 											value={formState.description}
 											onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-												setFormState({
-													...formState,
-													description: e.target.value,
-												})
+												updateFormState("description", e.target.value)
 											}
 										/>
 									</div>
@@ -714,7 +740,7 @@ function DashboardView() {
 											className="border-slate-200"
 											value={formState.owner}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
-												setFormState({ ...formState, owner: e.target.value })
+												updateFormState("owner", e.target.value)
 											}
 										/>
 										<Input
@@ -723,7 +749,7 @@ function DashboardView() {
 											className="border-slate-200"
 											value={formState.team}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
-												setFormState({ ...formState, team: e.target.value })
+												updateFormState("team", e.target.value)
 											}
 										/>
 									</div>
@@ -739,10 +765,10 @@ function DashboardView() {
 												className="border-slate-200"
 												value={formState.expectedImages}
 												onChange={(e: ChangeEvent<HTMLInputElement>) =>
-													setFormState({
-														...formState,
-														expectedImages: Number(e.target.value),
-													})
+													updateFormState(
+														"expectedImages",
+														Number(e.target.value),
+													)
 												}
 											/>
 										</div>
@@ -757,10 +783,10 @@ function DashboardView() {
 												className="border-slate-200"
 												value={formState.aiCoverageTarget}
 												onChange={(e: ChangeEvent<HTMLInputElement>) =>
-													setFormState({
-														...formState,
-														aiCoverageTarget: Number(e.target.value),
-													})
+													updateFormState(
+														"aiCoverageTarget",
+														Number(e.target.value),
+													)
 												}
 											/>
 										</div>
@@ -770,10 +796,7 @@ function DashboardView() {
 										<Select
 											value={formState.priority}
 											onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-												setFormState({
-													...formState,
-													priority: e.target.value,
-												})
+												updateFormState("priority", e.target.value)
 											}
 											className="border-slate-200"
 										>
@@ -787,7 +810,7 @@ function DashboardView() {
 											className="border-slate-200"
 											value={formState.tagHints}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
-												setFormState({ ...formState, tagHints: e.target.value })
+												updateFormState("tagHints", e.target.value)
 											}
 										/>
 									</div>
@@ -832,10 +855,7 @@ function DashboardView() {
 										required
 										value={datasetForm.requirementId}
 										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-											setDatasetForm({
-												...datasetForm,
-												requirementId: e.target.value,
-											})
+											updateDatasetForm("requirementId", e.target.value)
 										}
 										className="border-slate-200"
 									>
@@ -852,7 +872,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={datasetForm.name}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setDatasetForm({ ...datasetForm, name: e.target.value })
+											updateDatasetForm("name", e.target.value)
 										}
 									/>
 								</div>
@@ -862,10 +882,7 @@ function DashboardView() {
 									className="border-slate-200 font-mono text-sm"
 									value={datasetForm.storageBucket}
 									onChange={(e: ChangeEvent<HTMLInputElement>) =>
-										setDatasetForm({
-											...datasetForm,
-											storageBucket: e.target.value,
-										})
+										updateDatasetForm("storageBucket", e.target.value)
 									}
 								/>
 								<div className="grid grid-cols-3 gap-3">
@@ -875,10 +892,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={datasetForm.imageCount}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setDatasetForm({
-												...datasetForm,
-												imageCount: e.target.value,
-											})
+											updateDatasetForm("imageCount", e.target.value)
 										}
 									/>
 									<Input
@@ -887,10 +901,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={datasetForm.processedCount}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setDatasetForm({
-												...datasetForm,
-												processedCount: e.target.value,
-											})
+											updateDatasetForm("processedCount", e.target.value)
 										}
 									/>
 									<Input
@@ -898,10 +909,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={datasetForm.focusTags}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setDatasetForm({
-												...datasetForm,
-												focusTags: e.target.value,
-											})
+											updateDatasetForm("focusTags", e.target.value)
 										}
 									/>
 								</div>
@@ -912,10 +920,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={datasetForm.aiCaptionCoverage}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setDatasetForm({
-												...datasetForm,
-												aiCaptionCoverage: e.target.value,
-											})
+											updateDatasetForm("aiCaptionCoverage", e.target.value)
 										}
 									/>
 									<Input
@@ -924,10 +929,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={datasetForm.autoTagCoverage}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setDatasetForm({
-												...datasetForm,
-												autoTagCoverage: e.target.value,
-											})
+											updateDatasetForm("autoTagCoverage", e.target.value)
 										}
 									/>
 									<Input
@@ -936,10 +938,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={datasetForm.reviewCoverage}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setDatasetForm({
-												...datasetForm,
-												reviewCoverage: e.target.value,
-											})
+											updateDatasetForm("reviewCoverage", e.target.value)
 										}
 									/>
 								</div>
@@ -981,7 +980,7 @@ function DashboardView() {
 									required
 									value={taskForm.datasetId}
 									onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-										setTaskForm({ ...taskForm, datasetId: e.target.value })
+										updateTaskForm("datasetId", e.target.value)
 									}
 									className="border-slate-200"
 								>
@@ -997,7 +996,7 @@ function DashboardView() {
 									<Select
 										value={taskForm.type}
 										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-											setTaskForm({ ...taskForm, type: e.target.value })
+											updateTaskForm("type", e.target.value)
 										}
 										className="border-slate-200"
 									>
@@ -1010,7 +1009,7 @@ function DashboardView() {
 									<Select
 										value={taskForm.status}
 										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-											setTaskForm({ ...taskForm, status: e.target.value })
+											updateTaskForm("status", e.target.value)
 										}
 										className="border-slate-200"
 									>
@@ -1031,7 +1030,7 @@ function DashboardView() {
 										className="border-slate-200"
 										value={taskForm.progress}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setTaskForm({ ...taskForm, progress: e.target.value })
+											updateTaskForm("progress", e.target.value)
 										}
 									/>
 									<Input
@@ -1039,7 +1038,7 @@ function DashboardView() {
 										className="w-32 border-slate-200"
 										value={taskForm.assignedTo}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
-											setTaskForm({ ...taskForm, assignedTo: e.target.value })
+											updateTaskForm("assignedTo", e.target.value)
 										}
 									/>
 								</div>

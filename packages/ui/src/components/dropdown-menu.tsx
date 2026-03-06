@@ -1,4 +1,6 @@
-import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
+import CheckIcon from "lucide-react/icons/check";
+import ChevronRightIcon from "lucide-react/icons/chevron-right";
+import CircleIcon from "lucide-react/icons/circle";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import type * as React from "react";
 
