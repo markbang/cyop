@@ -1,13 +1,13 @@
+import { Button } from "@cyop/ui/components/button";
 import {
-	Button,
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-	Skeleton,
-} from "@cyop/ui";
+} from "@cyop/ui/components/dropdown-menu";
+import { Skeleton } from "@cyop/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 

@@ -1,9 +1,10 @@
-import { Button, Input, Label } from "@cyop/ui";
-import { useForm } from "@tanstack/react-form";
+import { Button } from "@cyop/ui/components/button";
+import { Input } from "@cyop/ui/components/input";
+import { Label } from "@cyop/ui/components/label";
 import { useNavigate } from "@tanstack/react-router";
 import type { ChangeEvent, FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import z from "zod";
 import { authClient } from "@/lib/auth-client";
 import Loader from "./loader";
 
@@ -16,17 +17,60 @@ export default function SignInForm({
 		from: "/",
 	});
 	const { isPending } = authClient.useSession();
+	const [formData, setFormData] = useState({
+		email: "",
+		password: "",
+	});
+	const [formErrors, setFormErrors] = useState<{
+		email?: string;
+		password?: string;
+	}>({});
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const form = useForm({
-		defaultValues: {
-			email: "",
-			password: "",
-		},
-		onSubmit: async ({ value }) => {
+	const canSubmit = useMemo(() => {
+		const email = formData.email.trim();
+		return (
+			email.length > 0 &&
+			email.includes("@") &&
+			formData.password.length >= 8 &&
+			!isSubmitting
+		);
+	}, [formData, isSubmitting]);
+
+	const validate = () => {
+		const errors: { email?: string; password?: string } = {};
+		const email = formData.email.trim();
+
+		if (!email) {
+			errors.email = "Email is required";
+		} else if (!email.includes("@")) {
+			errors.email = "Invalid email address";
+		}
+
+		if (!formData.password) {
+			errors.password = "Password is required";
+		} else if (formData.password.length < 8) {
+			errors.password = "Password must be at least 8 characters";
+		}
+
+		setFormErrors(errors);
+		return Object.keys(errors).length === 0;
+	};
+
+	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		event.stopPropagation();
+
+		if (!validate()) {
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
 			await authClient.signIn.email(
 				{
-					email: value.email,
-					password: value.password,
+					email: formData.email.trim(),
+					password: formData.password,
 				},
 				{
 					onSuccess: () => {
@@ -40,14 +84,10 @@ export default function SignInForm({
 					},
 				},
 			);
-		},
-		validators: {
-			onSubmit: z.object({
-				email: z.email("Invalid email address"),
-				password: z.string().min(8, "Password must be at least 8 characters"),
-			}),
-		},
-	});
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
 
 	if (isPending) {
 		return <Loader />;
@@ -57,75 +97,52 @@ export default function SignInForm({
 		<div className="mx-auto mt-10 w-full max-w-md p-6">
 			<h1 className="mb-6 text-center font-bold text-3xl">Welcome Back</h1>
 
-			<form
-				onSubmit={(event: FormEvent<HTMLFormElement>) => {
-					event.preventDefault();
-					event.stopPropagation();
-					form.handleSubmit();
-				}}
-				className="space-y-4"
-			>
+			<form onSubmit={handleSubmit} className="space-y-4">
 				<div>
-					<form.Field name="email">
-						{(field) => (
-							<div className="space-y-2">
-								<Label htmlFor={field.name}>Email</Label>
-								<Input
-									id={field.name}
-									name={field.name}
-									type="email"
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(event: ChangeEvent<HTMLInputElement>) =>
-										field.handleChange(event.target.value)
-									}
-								/>
-								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
-										{error?.message}
-									</p>
-								))}
-							</div>
-						)}
-					</form.Field>
+					<div className="space-y-2">
+						<Label htmlFor="email">Email</Label>
+						<Input
+							id="email"
+							name="email"
+							type="email"
+							value={formData.email}
+							onChange={(event: ChangeEvent<HTMLInputElement>) =>
+								setFormData((prev) => ({
+									...prev,
+									email: event.target.value,
+								}))
+							}
+						/>
+						{formErrors.email ? (
+							<p className="text-red-500">{formErrors.email}</p>
+						) : null}
+					</div>
 				</div>
 
 				<div>
-					<form.Field name="password">
-						{(field) => (
-							<div className="space-y-2">
-								<Label htmlFor={field.name}>Password</Label>
-								<Input
-									id={field.name}
-									name={field.name}
-									type="password"
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(event: ChangeEvent<HTMLInputElement>) =>
-										field.handleChange(event.target.value)
-									}
-								/>
-								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
-										{error?.message}
-									</p>
-								))}
-							</div>
-						)}
-					</form.Field>
+					<div className="space-y-2">
+						<Label htmlFor="password">Password</Label>
+						<Input
+							id="password"
+							name="password"
+							type="password"
+							value={formData.password}
+							onChange={(event: ChangeEvent<HTMLInputElement>) =>
+								setFormData((prev) => ({
+									...prev,
+									password: event.target.value,
+								}))
+							}
+						/>
+						{formErrors.password ? (
+							<p className="text-red-500">{formErrors.password}</p>
+						) : null}
+					</div>
 				</div>
 
-				<form.Subscribe>
-					{(state) => (
-						<Button
-							type="submit"
-							className="w-full"
-							disabled={!state.canSubmit || state.isSubmitting}
-						>
-							{state.isSubmitting ? "Submitting..." : "Sign In"}
-						</Button>
-					)}
-				</form.Subscribe>
+				<Button type="submit" className="w-full" disabled={!canSubmit}>
+					{isSubmitting ? "Submitting..." : "Sign In"}
+				</Button>
 			</form>
 
 			<div className="mt-4 text-center">

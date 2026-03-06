@@ -1,13 +1,13 @@
+import { Badge } from "@cyop/ui/components/badge";
+import { Button } from "@cyop/ui/components/button";
 import {
-	Badge,
-	Button,
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-	Progress,
-} from "@cyop/ui";
+} from "@cyop/ui/components/card";
+import { Progress } from "@cyop/ui/components/progress";
 import { useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute, Link } from "@tanstack/react-router";
 import {

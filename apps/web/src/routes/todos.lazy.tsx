@@ -1,15 +1,15 @@
+import { Badge } from "@cyop/ui/components/badge";
+import { Button } from "@cyop/ui/components/button";
 import {
-	Badge,
-	Button,
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-	Input,
-	Label,
-	Textarea,
-} from "@cyop/ui";
+} from "@cyop/ui/components/card";
+import { Input } from "@cyop/ui/components/input";
+import { Label } from "@cyop/ui/components/label";
+import { Textarea } from "@cyop/ui/components/textarea";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
