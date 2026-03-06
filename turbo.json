@@ -24,7 +24,7 @@
 		"build": {
 			"dependsOn": ["^build"],
 			"inputs": ["$TURBO_DEFAULT$", ".env*"],
-			"outputs": ["dist/**", ".output/**", ".vercel/output/**"]
+			"outputs": ["dist/**", ".output/**", ".next/**", ".vercel/output/**"]
 		},
 		"lint": {
 			"dependsOn": ["^lint"]
