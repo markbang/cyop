@@ -1,7 +1,9 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import SignInForm from "@/components/sign-in-form";
-import SignUpForm from "@/components/sign-up-form";
+import { lazy, Suspense, useState } from "react";
+import Loader from "@/components/loader";
+
+const SignInForm = lazy(() => import("@/components/sign-in-form"));
+const SignUpForm = lazy(() => import("@/components/sign-up-form"));
 
 export const Route = createLazyFileRoute("/login")({
 	component: RouteComponent,
@@ -10,9 +12,13 @@ export const Route = createLazyFileRoute("/login")({
 function RouteComponent() {
 	const [showSignIn, setShowSignIn] = useState(false);
 
-	return showSignIn ? (
-		<SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
-	) : (
-		<SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
+	return (
+		<Suspense fallback={<Loader />}>
+			{showSignIn ? (
+				<SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
+			) : (
+				<SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
+			)}
+		</Suspense>
 	);
 }
