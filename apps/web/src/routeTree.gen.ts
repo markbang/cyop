@@ -20,32 +20,32 @@ const TodosRoute = TodosRouteImport.update({
   id: '/todos',
   path: '/todos',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/todos.lazy').then((d) => d.Route))
 const MediaRoute = MediaRouteImport.update({
   id: '/media',
   path: '/media',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/media.lazy').then((d) => d.Route))
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/login.lazy').then((d) => d.Route))
 const EditorRoute = EditorRouteImport.update({
   id: '/editor',
   path: '/editor',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/editor.lazy').then((d) => d.Route))
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/dashboard.lazy').then((d) => d.Route))
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute

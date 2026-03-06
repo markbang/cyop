@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import { ModeToggle } from "./mode-toggle";
-import UserMenu from "./user-menu";
+
+const UserMenu = lazy(() => import("./user-menu"));
 
 export default function Header() {
 	const links = [
@@ -29,7 +31,13 @@ export default function Header() {
 				</nav>
 				<div className="flex items-center gap-2">
 					<ModeToggle />
-					<UserMenu />
+					<Suspense
+						fallback={
+							<div className="h-9 w-24 animate-pulse rounded-md bg-muted/60" />
+						}
+					>
+						<UserMenu />
+					</Suspense>
 				</div>
 			</div>
 		</header>
