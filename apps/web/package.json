@@ -13,16 +13,12 @@
 	},
 	"dependencies": {
 		"@cyop/api": "workspace:*",
-		"@cyop/auth": "workspace:*",
 		"@cyop/ui": "workspace:*",
-		"@hookform/resolvers": "^5.1.1",
 		"@tailwindcss/vite": "^4.0.15",
-		"@tanstack/react-form": "^1.12.3",
 		"@tanstack/react-query": "^5.85.5",
 		"@tanstack/react-router": "^1.149.3",
 		"@tanstack/react-start": "^1.149.4",
 		"@trpc/client": "catalog:",
-		"@trpc/server": "catalog:",
 		"@trpc/tanstack-react-query": "^11.5.0",
 		"better-auth": "catalog:",
 		"lucide-react": "catalog:",
@@ -30,8 +26,7 @@
 		"nitro": "^3.0.1-alpha.1",
 		"react": "catalog:",
 		"react-dom": "catalog:",
-		"sonner": "^2.0.5",
-		"zod": "catalog:"
+		"sonner": "^2.0.5"
 	},
 	"devDependencies": {
 		"@tanstack/react-router-devtools": "^1.149.3",

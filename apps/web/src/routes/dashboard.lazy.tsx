@@ -1,16 +1,16 @@
+import { Badge } from "@cyop/ui/components/badge";
+import { Button } from "@cyop/ui/components/button";
 import {
-	Badge,
-	Button,
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-	Input,
-	Progress,
-	Select,
-	Textarea,
-} from "@cyop/ui";
+} from "@cyop/ui/components/card";
+import { Input } from "@cyop/ui/components/input";
+import { Progress } from "@cyop/ui/components/progress";
+import { Select } from "@cyop/ui/components/select";
+import { Textarea } from "@cyop/ui/components/textarea";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import {
