@@ -1,78 +1,200 @@
 # cyop
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Router, Hono, TRPC, and more.
+cyop 是一个面向 AI 素材生产与运营流程的内部平台原型，当前仓库已经不只是 Better-T-Stack 的初始化模板了。
 
-## Features
+现在这套东西主要在做几件事：
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Router** - File-based routing with full type safety
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **shadcn/ui** - Reusable UI components
-- **Hono** - Lightweight, performant server framework
-- **tRPC** - End-to-end type-safe APIs
-- **Bun** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Authentication** - Better-Auth
-- **Turborepo** - Optimized monorepo build system
-- **Biome** - Linting and formatting
-- **Husky** - Git hooks for code quality
+- 用 **Requirements / Datasets / Tasks** 管理素材生产流程
+- 用 **Caption Jobs / Captions / Prompt Templates** 支撑 AI 打标与批处理
+- 提供一个 **React + TanStack Router** 的 Web 控制台
+- 提供一个 **Hono + tRPC + Better Auth** 的后端服务
+- 用 **Drizzle + PostgreSQL(Neon)** 管数据
+- 支持 **S3 兼容对象存储** 和自动化回调的扩展能力
 
-## Getting Started
+## Tech Stack
 
-First, install the dependencies:
+- Bun + TypeScript
+- Turborepo monorepo
+- React 19 + Vite + TanStack Router + React Query
+- Hono + tRPC
+- Better Auth
+- Drizzle ORM + PostgreSQL
+- Tailwind CSS + 自定义 UI package
+- Biome + Husky
+
+## Workspace Layout
+
+```text
+cyop/
+├── apps/
+│   ├── web/         # 前端控制台（Vite + React + TanStack Router）
+│   ├── server/      # API / Auth 服务（Hono + tRPC）
+│   └── fumadocs/    # 文档站点（存在但不是当前主线）
+├── packages/
+│   ├── api/         # tRPC router / context / 业务服务
+│   ├── auth/        # Better Auth 配置
+│   ├── db/          # Drizzle schema / migration / DB 入口
+│   ├── ui/          # 共享 UI 组件
+│   └── config/      # 共享配置包
+└── .github/workflows/release.yml
+```
+
+## Current Product Surface
+
+当前 Web 端已经有这些主要页面：
+
+- `/`：落地页
+- `/login`：登录 / 注册
+- `/dashboard`：需求、数据集、任务总览与录入
+- `/media`：素材库视图
+- `/todos`：AI 模型、Caption 批处理、任务操作台
+- `/editor`：编辑器页面
+
+最近还做了路由 lazy load 和 devtools 拆分，说明前端已经开始进入“能持续迭代”的阶段，不再只是 demo 壳子。
+
+## Quick Start
+
+### 1) Install dependencies
 
 ```bash
 bun install
 ```
-## Database Setup
 
-This project uses PostgreSQL with Drizzle ORM.
+### 2) Configure env files
 
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/server/.env` file with your PostgreSQL connection details.
+#### `apps/server/.env`
 
-3. Apply the schema to your database:
+最少需要这些：
+
+```env
+DATABASE_URL=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3001
+```
+
+如果你要跑素材 / 自动化 / AI caption 相关能力，再补这些：
+
+```env
+AUTOMATION_WEBHOOK_URL=
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_BUCKET=
+S3_REGION=
+S3_ENDPOINT=
+S3_FORCE_PATH_STYLE=false
+ASSET_PUBLIC_URL=
+AI_CAPTION_MODEL=
+AI_CAPTION_API_KEY=
+AI_CAPTION_BASE_URL=
+AI_CAPTION_PROMPT=
+```
+
+#### `apps/web/.env.example`
+
+```env
+VITE_SERVER_URL=http://localhost:3000
+```
+
+实际使用时建议在 `apps/web/.env` 里配置：
+
+```env
+VITE_SERVER_URL=http://localhost:3000
+```
+
+### 3) Push database schema
+
 ```bash
 bun run db:push
 ```
 
-
-Then, run the development server:
+### 4) Start development
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-The API is running at [http://localhost:3000](http://localhost:3000).
+默认端口：
 
-## Deployment
-- Build all apps: `bun run build`.
-- Web-only build: `cd apps/web && bun run build` (outputs static assets in `apps/web/dist` for any static host or CDN).
-- Server-only build: `cd apps/server && bun run build` to emit compiled server output.
+- Web: <http://localhost:3001>
+- API: <http://localhost:3000>
 
+## Useful Commands
 
-## Project Structure
+### Development
 
-```
-cyop/
-├── apps/
-│   ├── web/         # Frontend application (React + TanStack Router)
-│   └── server/      # Backend API (Hono, TRPC)
-├── packages/
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
+```bash
+bun run dev
+bun run dev:web
+bun run dev:server
 ```
 
-## Available Scripts
+### Build
 
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run dev:server`: Start only the server
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:studio`: Open database studio UI
-- `bun run check`: Run Biome formatting and linting
+```bash
+bun run build
+cd apps/web && bun run build
+cd apps/server && bun run build
+```
+
+### Type Check / Formatting
+
+```bash
+bun run check-types
+bun run check
+```
+
+### Database
+
+```bash
+bun run db:push
+bun run db:generate
+bun run db:migrate
+bun run db:studio
+```
+
+## Notes for Contributors
+
+### Auth / cookies
+
+`packages/auth` 里默认把 cookie 设成了：
+
+- `sameSite: "none"`
+- `secure: true`
+- `httpOnly: true`
+
+所以如果你在本地调试登录流程，记得一起检查：
+
+- 前后端 origin 是否匹配
+- 是否走 HTTPS / 代理
+- `BETTER_AUTH_URL` / `CORS_ORIGIN` / `VITE_SERVER_URL` 是否一致
+
+### Environment propagation
+
+根目录 `turbo.json` 已经把这些环境变量列进了 `globalEnv`，改部署或接入新服务时优先同步这里：
+
+- 数据库
+- Auth
+- S3 / 资源地址
+- 自动化 webhook
+- AI caption 配置
+- `VITE_SERVER_URL`
+
+### Object storage support
+
+服务端当前走的是 **S3-compatible** 配置，不绑死某一家云厂商；`S3_FORCE_PATH_STYLE` 也已经留了开关，兼容 MinIO / R2 / 各类兼容存储会更方便。
+
+## Release
+
+仓库里目前有一个 tag release workflow：推送 `v*` tag 时会触发 `.github/workflows/release.yml`，通过 `changelogithub` 生成 release。
+
+## What still needs love
+
+这个仓库接下来比较值得继续补的方向：
+
+- 补一份真正可执行的部署文档（尤其是 Web 静态部署 + Server 独立部署）
+- 给 caption / dataset / requirement 核心流程补最小测试
+- 把 `.env.example` 再细化成“必填 / 选填 / 仅生产环境”
+- 增加 CI 校验（至少 build + typecheck）
+
+如果你刚接手这个仓库，先看这里，再去看 `packages/db/src/schema` 和 `packages/api/src/routers`，会比直接从模板结构猜快很多。
