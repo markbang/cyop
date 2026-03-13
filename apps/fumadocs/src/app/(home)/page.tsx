@@ -50,7 +50,13 @@ export default function HomePage() {
 							<Link href="/docs">浏览文档</Link>
 						</Button>
 						<Button variant="outline" asChild>
-							<Link href="http://localhost:3001">返回控制塔</Link>
+							<Link
+								href={
+									process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001"
+								}
+							>
+								返回控制塔
+							</Link>
 						</Button>
 					</div>
 				</CardContent>

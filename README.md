@@ -102,6 +102,16 @@ VITE_SERVER_URL=http://localhost:3000
 VITE_SERVER_URL=http://localhost:3000
 ```
 
+#### `apps/fumadocs/.env.example`
+
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3001
+NEXT_PUBLIC_DOCS_SITE_URL=https://docs.cyop.design
+```
+
+- `NEXT_PUBLIC_APP_URL`：文档站首页“返回控制塔”按钮跳转地址
+- `NEXT_PUBLIC_DOCS_SITE_URL`：文档站公开访问域名，用于 Next.js `metadataBase` 与 OG 图片链接生成
+
 ### 3) Push database schema
 
 ```bash
@@ -179,6 +189,8 @@ bun run db:studio
 - 自动化 webhook
 - AI caption 配置
 - `VITE_SERVER_URL`
+- `NEXT_PUBLIC_APP_URL`（文档站首页里“返回控制塔”的跳转地址）
+- `NEXT_PUBLIC_DOCS_SITE_URL`（文档站的公开基地址，用于 metadata / OG 图片）
 
 ### Object storage support
 
