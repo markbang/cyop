@@ -6,6 +6,12 @@ node_modules
 # Build outputs
 dist
 build
+**/dist
+**/build
+**/.next
+**/.output
+.vercel
+**/.vercel
 *.tsbuildinfo
 
 # Environment variables
