@@ -45,10 +45,12 @@ cyop/
 
 - `/`：落地页
 - `/login`：登录 / 注册
-- `/dashboard`：需求、数据集、任务总览与录入
-- `/media`：素材库视图
-- `/todos`：AI 模型、Caption 批处理、任务操作台
-- `/editor`：编辑器页面
+- `/dashboard`：需求、数据集、任务总览与录入（需登录）
+- `/media`：素材库视图（需登录）
+- `/todos`：AI 模型、Caption 批处理、任务操作台（需登录）
+- `/editor`：编辑器页面（需登录）
+
+其中 `/dashboard`、`/media`、`/todos`、`/editor` 当前都在路由层通过 `requireSession()` 做鉴权，未登录会直接跳到 `/login`。
 
 最近还做了路由 lazy load 和 devtools 拆分，说明前端已经开始进入“能持续迭代”的阶段，不再只是 demo 壳子。
 
