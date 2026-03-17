@@ -156,6 +156,15 @@ bun run check-types
 bun run check
 ```
 
+注意：根目录的 `bun run check` 当前执行的是 `biome check --write .`，也就是**会直接改写文件**，它更接近“格式化 + 自动修复”，不是只读校验。
+
+如果你只是想在提交前确认仓库能不能过 CI，优先跑：
+
+```bash
+bun run check-types
+bun run build
+```
+
 ### Database
 
 ```bash
@@ -202,6 +211,21 @@ bun run db:studio
 
 仓库里目前有一个 tag release workflow：推送 `v*` tag 时会触发 `.github/workflows/release.yml`，通过 `changelogithub` 生成 release。
 
+## CI status
+
+仓库已经有 `.github/workflows/ci.yml`，当前会在 `push main` 和 `pull_request` 时执行：
+
+- `bun install --frozen-lockfile`
+- `bun run check-types`
+- `bun run build`
+
+也就是说，想提前本地对齐 CI，直接跑下面这组就行：
+
+```bash
+bun run check-types
+bun run build
+```
+
 ## What still needs love
 
 这个仓库接下来比较值得继续补的方向：
@@ -209,6 +233,6 @@ bun run db:studio
 - 补一份真正可执行的部署文档（尤其是 Web 静态部署 + Server 独立部署）
 - 给 caption / dataset / requirement 核心流程补最小测试
 - 把 `.env.example` 再细化成“必填 / 选填 / 仅生产环境”
-- 增加 CI 校验（至少 build + typecheck）
+- 视情况把只读 lint / format 校验拆出来，和当前会改文件的 `bun run check` 分开
 
 如果你刚接手这个仓库，先看这里，再去看 `packages/db/src/schema` 和 `packages/api/src/routers`，会比直接从模板结构猜快很多。
