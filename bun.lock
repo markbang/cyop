@@ -11,6 +11,7 @@
       "devDependencies": {
         "@biomejs/biome": "^2.2.0",
         "@types/bun": "^1.2.6",
+        "@types/node": "catalog:",
         "husky": "^9.1.7",
         "lint-staged": "^16.1.2",
         "tsdown": "^0.15.5",
@@ -166,6 +167,8 @@
       },
       "devDependencies": {
         "@cyop/config": "workspace:*",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
         "tsdown": "catalog:",
       },
       "peerDependencies": {

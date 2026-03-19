@@ -1,0 +1,22 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@cyop/auth": ["../auth/src/index.ts"],
+			"@cyop/auth/*": ["../auth/src/*"],
+			"@cyop/db": ["../db/src/index.ts"],
+			"@cyop/db/*": ["../db/src/*"]
+		},
+		"outDir": "./.typecheck",
+		"tsBuildInfoFile": "./.typecheck/tsconfig.check.tsbuildinfo",
+		"emitDeclarationOnly": true,
+		"declarationMap": false,
+		"sourceMap": false
+	},
+	"references": [
+		{ "path": "../db/tsconfig.check.json" },
+		{ "path": "../auth/tsconfig.check.json" }
+	],
+	"include": ["src"]
+}

@@ -1,0 +1,17 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@cyop/db": ["../db/src/index.ts"],
+			"@cyop/db/*": ["../db/src/*"]
+		},
+		"outDir": "./.typecheck",
+		"tsBuildInfoFile": "./.typecheck/tsconfig.check.tsbuildinfo",
+		"emitDeclarationOnly": true,
+		"declarationMap": false,
+		"sourceMap": false
+	},
+	"references": [{ "path": "../db/tsconfig.check.json" }],
+	"include": ["src"]
+}

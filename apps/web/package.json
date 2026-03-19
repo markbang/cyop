@@ -8,7 +8,7 @@
 		"build": "vite build",
 		"serve": "vite preview",
 		"start": "vite preview",
-		"check-types": "tsc --noEmit",
+		"check-types": "tsc --noEmit -p tsconfig.check.json && mkdir -p .typecheck && touch .typecheck/check.ok",
 		"deploy": "bun run build"
 	},
 	"dependencies": {

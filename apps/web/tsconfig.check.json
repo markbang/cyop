@@ -1,0 +1,16 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"],
+			"@cyop/api": ["../../packages/api/src/index.ts"],
+			"@cyop/api/*": ["../../packages/api/src/*"],
+			"@cyop/auth": ["../../packages/auth/src/index.ts"],
+			"@cyop/auth/*": ["../../packages/auth/src/*"],
+			"@cyop/db": ["../../packages/db/src/index.ts"],
+			"@cyop/db/*": ["../../packages/db/src/*"],
+			"@cyop/ui": ["../../packages/ui/src/index.ts"],
+			"@cyop/ui/*": ["../../packages/ui/src/*"]
+		}
+	}
+}

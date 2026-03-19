@@ -21,10 +21,12 @@
 	},
 	"scripts": {
 		"build": "tsdown",
-		"check-types": "tsdown"
+		"check-types": "tsc --noEmit && mkdir -p .typecheck && touch .typecheck/check.ok"
 	},
 	"devDependencies": {
 		"@cyop/config": "workspace:*",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
 		"tsdown": "catalog:"
 	},
 	"dependencies": {

@@ -15,7 +15,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsdown",
-		"check-types": "tsc --noEmit"
+		"check-types": "tsc -b tsconfig.check.json"
 	},
 	"devDependencies": {
 		"tsdown": "catalog:",

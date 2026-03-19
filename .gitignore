@@ -54,3 +54,6 @@ coverage
 .cache
 tmp
 temp
+
+# TypeScript check outputs
+**/.typecheck

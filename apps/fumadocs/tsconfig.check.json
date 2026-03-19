@@ -1,0 +1,11 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"],
+			"@/.source": [".source"],
+			"@cyop/ui": ["../../packages/ui/src/index.ts"],
+			"@cyop/ui/*": ["../../packages/ui/src/*"]
+		}
+	}
+}
