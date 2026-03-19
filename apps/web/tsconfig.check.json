@@ -12,5 +12,6 @@
 			"@cyop/ui": ["../../packages/ui/src/index.ts"],
 			"@cyop/ui/*": ["../../packages/ui/src/*"]
 		}
-	}
+	},
+	"include": ["src"]
 }
