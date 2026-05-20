@@ -107,6 +107,12 @@ function EditorView() {
 		}),
 	);
 
+	const toggleAutoEnqueue = useMutation(
+		trpc.dataset.toggleAutoEnqueue.mutationOptions({
+			onSuccess: () => datasetsQuery.refetch(),
+		}),
+	);
+
 	const [isExporting, setIsExporting] = useState(false);
 
 	const handleExport = async (format: "json" | "csv" | "txt") => {
@@ -276,6 +282,29 @@ function EditorView() {
 									</option>
 								))}
 							</Select>
+
+							{datasetId ? (
+								<div className="flex items-center gap-2 rounded-md border px-3 py-1.5">
+									<input
+										type="checkbox"
+										className="size-4"
+										checked={
+											datasetsQuery.data?.items?.find(
+												(ds) => ds.id === Number(datasetId),
+											)?.autoEnqueue ?? false
+										}
+										onChange={(e) => {
+											toggleAutoEnqueue.mutate({
+												id: Number(datasetId),
+												enabled: e.target.checked,
+											});
+										}}
+									/>
+									<span className="text-muted-foreground text-xs">
+										上传自动打标
+									</span>
+								</div>
+							) : null}
 
 							<Select
 								value={statusFilter}

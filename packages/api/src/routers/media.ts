@@ -1,9 +1,11 @@
 import { db } from "@cyop/db";
 import { and, desc, eq, ilike, or, sql } from "@cyop/db/drizzle-orm";
 import {
+	captions,
 	datasets,
 	mediaAssets,
 	mediaStatusValues,
+	promptTemplates,
 	requirements,
 } from "@cyop/db/schema/platform";
 import { TRPCError } from "@trpc/server";
@@ -270,6 +272,30 @@ export const mediaRouter = router({
 				throw new TRPCError({
 					code: "NOT_FOUND",
 					message: "Asset not found",
+				});
+			}
+
+			// Auto-enqueue caption if dataset has autoEnqueue enabled
+			const [datasetRow] = await db
+				.select({ autoEnqueue: datasets.autoEnqueue })
+				.from(datasets)
+				.where(eq(datasets.id, asset.datasetId))
+				.limit(1);
+
+			if (datasetRow?.autoEnqueue) {
+				const [defaultTemplate] = await db
+					.select({ id: promptTemplates.id })
+					.from(promptTemplates)
+					.where(eq(promptTemplates.isDefault, true))
+					.limit(1);
+
+				const now = new Date();
+				await db.insert(captions).values({
+					mediaAssetId: asset.id,
+					promptTemplateId: defaultTemplate?.id ?? null,
+					status: "pending",
+					createdAt: now,
+					updatedAt: now,
 				});
 			}
 
