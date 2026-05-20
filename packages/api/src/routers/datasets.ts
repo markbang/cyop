@@ -154,4 +154,18 @@ export const datasetsRouter = router({
 
 			return record;
 		}),
+
+	toggleAutoEnqueue: protectedProcedure
+		.input(z.object({ id: z.number().int().positive(), enabled: z.boolean() }))
+		.mutation(async ({ input }) => {
+			const [record] = await db
+				.update(datasets)
+				.set({ autoEnqueue: input.enabled, updatedAt: new Date() })
+				.where(eq(datasets.id, input.id))
+				.returning();
+			if (!record) {
+				throw new Error("Failed to update dataset");
+			}
+			return record;
+		}),
 });

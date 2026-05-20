@@ -91,6 +91,7 @@ export const datasets = pgTable("datasets", {
 	reviewCoverage: integer("review_coverage").notNull().default(0),
 	focusTags: text("focus_tags").array().notNull().default(sql`ARRAY[]::text[]`),
 	lastRunAt: timestamp("last_run_at"),
+	autoEnqueue: boolean("auto_enqueue").notNull().default(false),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -180,6 +181,7 @@ export const mediaAssets = pgTable("media_assets", {
 
 export const captionStatusValues = [
 	"pending",
+	"queued",
 	"processing",
 	"completed",
 	"approved",
@@ -225,6 +227,9 @@ export const captions = pgTable("captions", {
 	reviewedBy: text("reviewed_by"),
 	reviewedAt: timestamp("reviewed_at"),
 	processingError: text("processing_error"),
+	retryCount: integer("retry_count").notNull().default(0),
+	queuedAt: timestamp("queued_at"),
+	errorDetail: text("error_detail"),
 	metadata: jsonb("metadata")
 		.$type<Record<string, unknown>>()
 		.notNull()

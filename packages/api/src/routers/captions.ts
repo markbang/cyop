@@ -470,7 +470,7 @@ export const captionsRouter = router({
 			const captionRecords = assets.map((asset) => ({
 				mediaAssetId: asset.id,
 				promptTemplateId: templateId,
-				status: "processing" as const,
+				status: "pending" as const,
 				createdAt: now,
 				updatedAt: now,
 			}));

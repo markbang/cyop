@@ -6,6 +6,8 @@ import { auth } from "@cyop/auth";
 import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { captionDispatch } from "./routes/caption-dispatch";
+import { captionDlq, captionWorker } from "./routes/caption-worker";
 
 const env = ((
 	globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -55,6 +57,9 @@ app.onError((err, c) => {
 	return c.json({ error: "Internal server error" }, 500);
 });
 
+app.get("/api/dispatch", captionDispatch);
+app.post("/api/caption-worker", captionWorker);
+app.post("/api/caption-dlq", captionDlq);
 app.get("/", (c) => {
 	return c.text("OK");
 });

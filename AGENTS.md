@@ -24,3 +24,17 @@ History currently has only the initial commit, so prefer Conventional Commit sub
 
 ## Security & Configuration Tips
 Keep secrets in untracked `.env` files (e.g., `apps/server/.env` for PostgreSQL and Better-Auth keys) or your hosting provider’s secret manager. Run `bun run db:push` against a disposable database when changing `packages/db`, and document destructive steps. Never leak secrets into the client bundle—proxy them through `packages/api` or Hono handlers instead.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues on this repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage roles use the default label names (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout. One `CONTEXT.md` + `docs/adr/` at repo root (neither exists yet — `grill-with-docs` creates them lazily). See `docs/agents/domain.md`.

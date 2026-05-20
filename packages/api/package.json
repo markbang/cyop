@@ -32,6 +32,7 @@
 		"dotenv": "catalog:",
 		"zod": "catalog:",
 		"@cyop/auth": "workspace:*",
-		"@cyop/db": "workspace:*"
+		"@cyop/db": "workspace:*",
+		"@upstash/qstash": "^2.11.0"
 	}
 }
