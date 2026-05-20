@@ -38,7 +38,7 @@ function EditorView() {
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [editValue, setEditValue] = useState("");
 
-	const datasetsQuery = useQuery(trpc.dataset.list.queryOptions());
+	const datasetsQuery = useQuery(trpc.dataset.list.queryOptions({}));
 	const statsQuery = useQuery(
 		trpc.caption.stats.queryOptions({
 			datasetId: datasetId ? Number(datasetId) : undefined,
@@ -159,7 +159,7 @@ function EditorView() {
 		}
 	};
 
-	const captions = captionsQuery.data ?? [];
+	const captions = captionsQuery.data?.items ?? [];
 	const selectedCaption = captions.find((caption) => caption.id === selectedId);
 	const rejectedCaptionIds = captions
 		.filter((caption) => caption.status === "rejected")
@@ -270,7 +270,7 @@ function EditorView() {
 								className="h-9 w-[180px] border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:ring-blue-900"
 							>
 								<option value="">所有数据集</option>
-								{datasetsQuery.data?.map((ds) => (
+								{datasetsQuery.data?.items?.map((ds) => (
 									<option key={ds.id} value={ds.id}>
 										{ds.name}
 									</option>

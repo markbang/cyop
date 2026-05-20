@@ -54,7 +54,7 @@ function AiOps() {
 	const [jobsPage, setJobsPage] = useState(1);
 
 	const models = useQuery(trpc.model.list.queryOptions());
-	const datasets = useQuery(trpc.dataset.list.queryOptions());
+	const datasets = useQuery(trpc.dataset.list.queryOptions({}));
 	const jobs = useQuery(
 		trpc.captionOps.listJobs.queryOptions({
 			datasetId: batchDataset ? Number(batchDataset) : undefined,
@@ -409,7 +409,7 @@ function AiOps() {
 								}}
 							>
 								<option value="">选择数据集</option>
-								{datasets.data?.map((dataset) => (
+								{datasets.data?.items?.map((dataset) => (
 									<option key={dataset.id} value={dataset.id}>
 										{dataset.name}
 									</option>

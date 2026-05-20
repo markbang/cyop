@@ -1,4 +1,4 @@
-import { createHash, createHmac } from "node:crypto";
+import { createHash, createHmac, randomUUID } from "node:crypto";
 
 const AWS_ALGORITHM = "AWS4-HMAC-SHA256";
 const SERVICE = "s3";
@@ -114,8 +114,8 @@ export function buildStorageKey(datasetId: number, originalName: string) {
 		.replace(/[^a-z0-9.-]+/g, "-")
 		.replace(/^-+|-+$/g, "")
 		.slice(0, 120);
-	const timestamp = Date.now();
-	return `datasets/${datasetId}/${timestamp}-${normalizedName || "asset"}`;
+	const suffix = randomUUID().slice(0, 8);
+	return `datasets/${datasetId}/${Date.now()}-${suffix}-${normalizedName || "asset"}`;
 }
 
 function joinUriSegments(...segments: Array<string | undefined>) {

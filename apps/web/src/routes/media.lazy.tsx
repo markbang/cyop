@@ -33,7 +33,7 @@ export const Route = createLazyFileRoute("/media")({
 });
 
 function MediaLibrary() {
-	const datasetQuery = useQuery(trpc.dataset.list.queryOptions());
+	const datasetQuery = useQuery(trpc.dataset.list.queryOptions({}));
 	const [filterDataset, setFilterDataset] = useState("");
 	const mediaQuery = useQuery(
 		trpc.media.list.queryOptions(
@@ -70,8 +70,8 @@ function MediaLibrary() {
 	const [selectedDataset, setSelectedDataset] = useState("");
 	const [uploads, setUploads] = useState<UploadEntry[]>([]);
 
-	const datasets = datasetQuery.data ?? [];
-	const assets = mediaQuery.data ?? [];
+	const datasets = datasetQuery.data?.items ?? [];
+	const assets = mediaQuery.data?.items ?? [];
 
 	const handleFileChange = async (
 		event: React.ChangeEvent<HTMLInputElement>,

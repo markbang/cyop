@@ -1,10 +1,17 @@
 import { db } from "@cyop/db";
-import { desc, eq } from "@cyop/db/drizzle-orm";
+import { and, desc, eq, ilike, sql } from "@cyop/db/drizzle-orm";
 import { datasets, requirements } from "@cyop/db/schema/platform";
 import z from "zod";
 
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { publishAutomationEvent } from "../services/automation";
+
+const datasetListInput = z.object({
+	search: z.string().optional(),
+	requirementId: z.number().int().positive().optional(),
+	limit: z.number().int().positive().max(100).default(50),
+	offset: z.number().int().nonnegative().default(0),
+});
 
 const datasetBaseInput = z.object({
 	requirementId: z.number().int().positive(),
@@ -21,20 +28,41 @@ const datasetBaseInput = z.object({
 });
 
 export const datasetsRouter = router({
-	list: publicProcedure.query(async () => {
-		const rows = await db
-			.select({
-				dataset: datasets,
-				requirement: requirements,
-			})
-			.from(datasets)
-			.leftJoin(requirements, eq(datasets.requirementId, requirements.id))
-			.orderBy(desc(datasets.updatedAt));
+	list: publicProcedure.input(datasetListInput).query(async ({ input }) => {
+		const conditions = [];
 
-		return rows.map(({ dataset, requirement }) => ({
-			...dataset,
-			requirement,
-		}));
+		if (input?.search) {
+			conditions.push(ilike(datasets.name, `%${input.search}%`));
+		}
+		if (input?.requirementId) {
+			conditions.push(eq(datasets.requirementId, input.requirementId));
+		}
+
+		const [countResult, rows] = await Promise.all([
+			db
+				.select({ total: sql<number>`count(*)::int` })
+				.from(datasets)
+				.where(conditions.length ? and(...conditions) : undefined),
+			db
+				.select({
+					dataset: datasets,
+					requirement: requirements,
+				})
+				.from(datasets)
+				.leftJoin(requirements, eq(datasets.requirementId, requirements.id))
+				.where(conditions.length ? and(...conditions) : undefined)
+				.orderBy(desc(datasets.updatedAt))
+				.limit(input?.limit ?? 50)
+				.offset(input?.offset ?? 0),
+		]);
+
+		return {
+			items: rows.map(({ dataset, requirement }) => ({
+				...dataset,
+				requirement,
+			})),
+			total: countResult[0]?.total ?? 0,
+		};
 	}),
 
 	create: protectedProcedure

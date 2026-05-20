@@ -1,5 +1,5 @@
 import { db } from "@cyop/db";
-import { and, desc, eq } from "@cyop/db/drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "@cyop/db/drizzle-orm";
 import {
 	datasets,
 	mediaAssets,
@@ -22,6 +22,10 @@ const listInput = z
 	.object({
 		datasetId: z.number().int().positive().optional(),
 		requirementId: z.number().int().positive().optional(),
+		search: z.string().optional(),
+		status: z.enum(mediaStatusValues).optional(),
+		limit: z.number().int().positive().max(200).default(50),
+		offset: z.number().int().nonnegative().default(0),
 	})
 	.optional();
 
@@ -34,24 +38,49 @@ export const mediaRouter = router({
 		if (input?.requirementId) {
 			conditions.push(eq(mediaAssets.requirementId, input.requirementId));
 		}
+		if (input?.status) {
+			conditions.push(eq(mediaAssets.status, input.status));
+		}
+		if (input?.search) {
+			const pattern = `%${input.search}%`;
+			conditions.push(
+				or(
+					ilike(mediaAssets.originalName, pattern),
+					ilike(mediaAssets.storageKey, pattern),
+				),
+			);
+		}
 
-		const rows = await db
-			.select({
-				asset: mediaAssets,
-				dataset: datasets,
-				requirement: requirements,
-			})
-			.from(mediaAssets)
-			.leftJoin(datasets, eq(mediaAssets.datasetId, datasets.id))
-			.leftJoin(requirements, eq(mediaAssets.requirementId, requirements.id))
-			.where(conditions.length ? and(...conditions) : undefined)
-			.orderBy(desc(mediaAssets.createdAt));
+		const where = conditions.length ? and(...conditions) : undefined;
 
-		return rows.map(({ asset, dataset, requirement }) => ({
-			...asset,
-			dataset,
-			requirement,
-		}));
+		const [countResult, rows] = await Promise.all([
+			db
+				.select({ total: sql<number>`count(*)::int` })
+				.from(mediaAssets)
+				.where(where),
+			db
+				.select({
+					asset: mediaAssets,
+					dataset: datasets,
+					requirement: requirements,
+				})
+				.from(mediaAssets)
+				.leftJoin(datasets, eq(mediaAssets.datasetId, datasets.id))
+				.leftJoin(requirements, eq(mediaAssets.requirementId, requirements.id))
+				.where(where)
+				.orderBy(desc(mediaAssets.createdAt))
+				.limit(input?.limit ?? 50)
+				.offset(input?.offset ?? 0),
+		]);
+
+		return {
+			items: rows.map(({ asset, dataset, requirement }) => ({
+				...asset,
+				dataset,
+				requirement,
+			})),
+			total: countResult[0]?.total ?? 0,
+		};
 	}),
 
 	requestUpload: protectedProcedure
@@ -122,6 +151,82 @@ export const mediaRouter = router({
 				asset,
 				upload,
 			};
+		}),
+
+	requestBatchUpload: protectedProcedure
+		.input(
+			z.object({
+				datasetId: z.number().int().positive(),
+				files: z
+					.array(
+						z.object({
+							fileName: z.string().min(1),
+							mimeType: z.string().optional(),
+							size: z.number().int().nonnegative(),
+						}),
+					)
+					.min(1)
+					.max(100),
+			}),
+		)
+		.mutation(async ({ input }) => {
+			const [datasetRow] = await db
+				.select({
+					id: datasets.id,
+					requirementId: datasets.requirementId,
+				})
+				.from(datasets)
+				.where(eq(datasets.id, input.datasetId))
+				.limit(1);
+
+			if (!datasetRow) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Dataset not found",
+				});
+			}
+
+			const bucket = getStorageBucket();
+			const now = new Date();
+			const sessions: Array<{
+				asset: typeof mediaAssets.$inferSelect;
+				upload: ReturnType<typeof createPresignedUploadUrl>;
+			}> = [];
+
+			for (const file of input.files) {
+				const storageKey = buildStorageKey(input.datasetId, file.fileName);
+				const publicUrl = buildPublicUrl(storageKey);
+				const contentType = file.mimeType || "application/octet-stream";
+
+				const [asset] = await db
+					.insert(mediaAssets)
+					.values({
+						datasetId: input.datasetId,
+						requirementId: datasetRow.requirementId,
+						originalName: file.fileName,
+						mimeType: contentType,
+						size: file.size,
+						storageBucket: bucket,
+						storageKey,
+						publicUrl,
+						status: "pending_upload",
+						createdAt: now,
+						updatedAt: now,
+					})
+					.returning();
+
+				if (asset) {
+					sessions.push({
+						asset,
+						upload: createPresignedUploadUrl({
+							key: storageKey,
+							contentType,
+						}),
+					});
+				}
+			}
+
+			return { sessions };
 		}),
 
 	finalizeUpload: protectedProcedure

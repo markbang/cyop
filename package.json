@@ -29,6 +29,7 @@
 	},
 	"scripts": {
 		"check": "biome check --write .",
+		"check:ci": "biome check .",
 		"prepare": "husky",
 		"postinstall": "bun run build:ui",
 		"dev": "turbo dev",
@@ -41,7 +42,9 @@
 		"db:push": "turbo -F @cyop/db db:push",
 		"db:studio": "turbo -F @cyop/db db:studio",
 		"db:generate": "turbo -F @cyop/db db:generate",
-		"db:migrate": "turbo -F @cyop/db db:migrate"
+		"db:migrate": "turbo -F @cyop/db db:migrate",
+		"test": "bun test",
+		"test:api": "turbo -F @cyop/api test"
 	},
 	"dependencies": {
 		"dotenv": "^17.2.2",

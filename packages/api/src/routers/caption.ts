@@ -121,11 +121,13 @@ export const captionRouter = router({
 				});
 			}
 
-			const result = await generateCaption({
-				imageUrl,
-				prompt: input.prompt,
+			const result = await generateCaption(
+				{
+					imageUrl,
+					systemPrompt: input.prompt ?? undefined,
+				},
 				model,
-			});
+			);
 
 			const [job] = await db
 				.insert(captionJobs)
@@ -300,11 +302,13 @@ export const captionRouter = router({
 						}
 
 						const model = await getResolvedModel(job.modelId);
-						const result = await generateCaption({
-							imageUrl: job.imageUrl,
-							prompt: job.prompt ?? undefined,
+						const result = await generateCaption(
+							{
+								imageUrl: job.imageUrl,
+								systemPrompt: job.prompt ?? undefined,
+							},
 							model,
-						});
+						);
 						const completedAt = new Date();
 
 						await db

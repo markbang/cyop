@@ -8,7 +8,9 @@ Turborepo + Bun split code into `apps` and `packages`. `apps/web` (React + TanSt
 - `bun run dev[:web|:server]` – Turbo dev servers (web 3001, API 3000) with optional focus.
 - `bun run build` – monorepo production build; run before packaging `apps/web/dist` for hosting.
 - `bun run check-types` – run all TypeScript project references.
-- `bun run check` – Biome format + lint, also enforced by Husky/lint-staged.
+- `bun run check` – Biome format + auto-fix (writes files), also enforced by Husky/lint-staged.
+- `bun run check:ci` – Biome read-only lint check (CI-compatible).
+- `bun test` – run all tests (requires valid DATABASE_URL env, even a dummy one).
 - `bun run db:push` / `bun run db:studio` – apply or inspect Drizzle migrations using `apps/server/.env`.
 
 ## Coding Style & Naming Conventions

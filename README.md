@@ -153,20 +153,16 @@ cd apps/server && bun run build
 
 ```bash
 bun run check-types
-bun run check
+bun run check          # format + auto-fix (writes files)
+bun run check:ci       # read-only lint check (CI-compatible)
 ```
 
-注意：根目录的 `bun run check` 当前执行的是 `biome check --write .`，也就是**会直接改写文件**，它更接近“格式化 + 自动修复”，不是只读校验。
+本地提交前跑 `bun run check` 顺手统一格式。CI 或只读校验用 `bun run check:ci`。
 
-这也意味着：
-
-- 本地提交前跑它没问题，顺手统一格式
-- 如果你只是想看 CI 会不会过，不要把它当成纯检查命令
-- 当前仓库还**没有**单独提供一个只读版 lint/check 脚本
-
-如果你只是想在提交前确认仓库能不能过 CI，优先跑：
+提交前确认能过 CI：
 
 ```bash
+bun run check:ci
 bun run check-types
 bun run build
 ```
@@ -176,11 +172,13 @@ bun run build
 ### Database
 
 ```bash
-bun run db:push
-bun run db:generate
-bun run db:migrate
-bun run db:studio
+bun run db:generate   # generate migration from schema changes
+bun run db:migrate    # apply migrations (production workflow)
+bun run db:push       # direct schema push (dev only, skip in production)
+bun run db:studio     # open Drizzle Studio
 ```
+
+Migration files are in `packages/db/src/migrations/` and must be committed. Use `db:generate` + `db:migrate` for all production changes. See `docs/deployment.md` for the full deployment guide.
 
 ## Notes for Contributors
 
@@ -188,8 +186,8 @@ bun run db:studio
 
 `packages/auth` 里默认把 cookie 设成了：
 
-- `sameSite: "none"`
-- `secure: true`
+- `sameSite: "lax"`
+- `secure: isProduction`
 - `httpOnly: true`
 
 所以如果你在本地调试登录流程，记得一起检查：
@@ -236,11 +234,11 @@ bun run build
 
 ## What still needs love
 
-这个仓库接下来比较值得继续补的方向：
-
-- 补一份真正可执行的部署文档（尤其是 Web 静态部署 + Server 独立部署）
 - 给 caption / dataset / requirement 核心流程补最小测试
-- 把 `.env.example` 再细化成“必填 / 选填 / 仅生产环境”
-- 视情况把只读 lint / format 校验拆出来，和当前会改文件的 `bun run check` 分开
+- 前端错误处理与用户反馈体验
+- Kanban 拖拽排序
+- 权限分级（管理员 / 运营 / 审核员）
+- 操作审计日志
+- 通知系统
 
 如果你刚接手这个仓库，先看这里，再去看 `packages/db/src/schema` 和 `packages/api/src/routers`，会比直接从模板结构猜快很多。
