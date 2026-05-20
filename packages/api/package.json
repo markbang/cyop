@@ -15,7 +15,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsdown",
-		"check-types": "tsc -b tsconfig.check.json"
+		"check-types": "tsc -b tsconfig.check.json",
+		"test": "bun test"
 	},
 	"devDependencies": {
 		"tsdown": "catalog:",

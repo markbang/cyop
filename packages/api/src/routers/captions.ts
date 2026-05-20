@@ -1,5 +1,14 @@
 import { db } from "@cyop/db";
-import { and, desc, eq, inArray, isNull, sql } from "@cyop/db/drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	ilike,
+	inArray,
+	isNull,
+	or,
+	sql,
+} from "@cyop/db/drizzle-orm";
 import {
 	captionStatusValues,
 	captions,
@@ -18,6 +27,7 @@ const listInput = z
 		mediaAssetId: z.number().int().positive().optional(),
 		datasetId: z.number().int().positive().optional(),
 		status: z.enum(captionStatusValues).optional(),
+		search: z.string().optional(),
 		limit: z.number().int().positive().max(100).default(50),
 		offset: z.number().int().nonnegative().default(0),
 	})
@@ -51,17 +61,40 @@ export const captionsRouter = router({
 			conditions.push(eq(mediaAssets.datasetId, input.datasetId));
 		}
 
-		const rows = await query
-			.where(conditions.length ? and(...conditions) : undefined)
-			.orderBy(desc(captions.createdAt))
-			.limit(input?.limit ?? 50)
-			.offset(input?.offset ?? 0);
+		if (input?.search) {
+			const pattern = `%${input.search}%`;
+			conditions.push(
+				or(
+					ilike(captions.aiCaption, pattern),
+					ilike(captions.finalCaption, pattern),
+					ilike(captions.manualCaption, pattern),
+				),
+			);
+		}
 
-		return rows.map(({ caption, mediaAsset, promptTemplate }) => ({
-			...caption,
-			mediaAsset,
-			promptTemplate,
-		}));
+		const where = conditions.length ? and(...conditions) : undefined;
+
+		const [countResult, rows] = await Promise.all([
+			db
+				.select({ total: sql<number>`count(*)::int` })
+				.from(captions)
+				.leftJoin(mediaAssets, eq(captions.mediaAssetId, mediaAssets.id))
+				.where(where),
+			query
+				.where(where)
+				.orderBy(desc(captions.createdAt))
+				.limit(input?.limit ?? 50)
+				.offset(input?.offset ?? 0),
+		]);
+
+		return {
+			items: rows.map(({ caption, mediaAsset, promptTemplate }) => ({
+				...caption,
+				mediaAsset,
+				promptTemplate,
+			})),
+			total: countResult[0]?.total ?? 0,
+		};
 	}),
 
 	getById: protectedProcedure
@@ -342,6 +375,60 @@ export const captionsRouter = router({
 			return stats;
 		}),
 
+	batchProgress: protectedProcedure
+		.input(z.object({ datasetId: z.number().int().positive() }))
+		.query(async ({ input }) => {
+			const rows = await db
+				.select({
+					status: captions.status,
+					count: sql<number>`count(*)::int`,
+				})
+				.from(captions)
+				.innerJoin(mediaAssets, eq(captions.mediaAssetId, mediaAssets.id))
+				.where(eq(mediaAssets.datasetId, input.datasetId))
+				.groupBy(captions.status);
+
+			let processing = 0;
+			let completed = 0;
+			let approved = 0;
+			let rejected = 0;
+			let pending = 0;
+
+			for (const row of rows) {
+				switch (row.status) {
+					case "pending":
+						pending = row.count;
+						break;
+					case "processing":
+						processing = row.count;
+						break;
+					case "completed":
+						completed = row.count;
+						break;
+					case "approved":
+						approved = row.count;
+						break;
+					case "rejected":
+						rejected = row.count;
+						break;
+				}
+			}
+
+			const finished = completed + approved + rejected;
+			const total = processing + finished;
+			const progress = total > 0 ? Math.round((finished / total) * 100) : 0;
+			const isRunning = processing > 0;
+
+			return {
+				processing,
+				completed: finished,
+				total,
+				progress,
+				isRunning,
+				details: { pending, processing, completed, approved, rejected },
+			};
+		}),
+
 	triggerCaptioning: protectedProcedure
 		.input(
 			z.object({
@@ -442,7 +529,8 @@ export const captionsRouter = router({
 				.from(captions)
 				.innerJoin(mediaAssets, eq(captions.mediaAssetId, mediaAssets.id))
 				.where(conditions.length ? and(...conditions) : undefined)
-				.orderBy(mediaAssets.originalName);
+				.orderBy(mediaAssets.originalName)
+				.limit(5000);
 
 			if (input.format === "csv") {
 				const header = "filename,caption,status,model,confidence";

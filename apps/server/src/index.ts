@@ -1,11 +1,11 @@
 import "dotenv/config";
 import { createContext } from "@cyop/api/context";
 import { appRouter } from "@cyop/api/routers/index";
+import { logger } from "@cyop/api/services/logger";
 import { auth } from "@cyop/auth";
 import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
 
 const env = ((
 	globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -13,7 +13,17 @@ const env = ((
 
 const app = new Hono();
 
-app.use(logger());
+app.use("*", async (c, next) => {
+	const start = Date.now();
+	await next();
+	logger.debug("request", {
+		method: c.req.method,
+		path: c.req.path,
+		status: c.res.status,
+		ms: Date.now() - start,
+	});
+});
+
 app.use(
 	"/*",
 	cors({
@@ -36,8 +46,19 @@ app.use(
 	}),
 );
 
+app.onError((err, c) => {
+	logger.error("unhandled error", {
+		error: err.message,
+		path: c.req.path,
+		method: c.req.method,
+	});
+	return c.json({ error: "Internal server error" }, 500);
+});
+
 app.get("/", (c) => {
 	return c.text("OK");
 });
+
+logger.info("server initialized");
 
 export default app;

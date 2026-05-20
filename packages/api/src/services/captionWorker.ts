@@ -5,7 +5,8 @@ import {
 	mediaAssets,
 	promptTemplates,
 } from "@cyop/db/schema/platform";
-import { generateCaptionsBatch } from "./openai";
+import { generateCaptionsBatch } from "./caption";
+import { logger } from "./logger";
 
 type ProcessResult = {
 	processed: number;
@@ -18,6 +19,8 @@ export async function processPendingCaptions(
 	limit = 10,
 	concurrency = 3,
 ): Promise<ProcessResult> {
+	logger.info("Processing pending captions", { limit, concurrency });
+
 	const pendingCaptions = await db
 		.select({
 			captionId: captions.id,
@@ -43,6 +46,8 @@ export async function processPendingCaptions(
 		return { processed: 0, succeeded: 0, failed: 0, errors: [] };
 	}
 
+	logger.info("Pending captions found", { count: pendingCaptions.length });
+
 	const defaultSystemPrompt =
 		"You are an expert image analyst. Describe the image in detail, focusing on the main subject, composition, colors, and any notable elements.";
 	const defaultUserPrompt = "Please describe this image in detail.";
@@ -60,22 +65,21 @@ export async function processPendingCaptions(
 		}));
 
 	const results = await generateCaptionsBatch(jobs, concurrency);
-	const errors = results
-		.filter((result) => !result.success || !result.caption)
-		.map((result) => ({
-			captionId: result.captionId,
-			error: result.error || "Unknown error",
-		}));
-	const succeeded = results.filter(
-		(result) => result.success && Boolean(result.caption),
-	).length;
+
+	const succeeded = results.filter((r) => r.success && r.caption).length;
 	const failed = results.length - succeeded;
+	const errors = results
+		.filter((r) => !r.success || !r.caption)
+		.map((r) => ({
+			captionId: r.captionId,
+			error: r.error || "Unknown error",
+		}));
 
 	await Promise.all(
-		results.map((result) => {
+		results.map(async (result) => {
 			if (result.success && result.caption) {
 				const completedAt = new Date();
-				return db
+				await db
 					.update(captions)
 					.set({
 						aiCaption: result.caption,
@@ -88,23 +92,24 @@ export async function processPendingCaptions(
 						updatedAt: completedAt,
 					})
 					.where(eq(captions.id, result.captionId));
+			} else {
+				await db
+					.update(captions)
+					.set({
+						status: "rejected",
+						rejectionReason: result.error || "Caption generation failed",
+						updatedAt: new Date(),
+					})
+					.where(eq(captions.id, result.captionId));
 			}
-
-			return db
-				.update(captions)
-				.set({
-					status: "rejected",
-					rejectionReason: result.error || "Caption generation failed",
-					updatedAt: new Date(),
-				})
-				.where(eq(captions.id, result.captionId));
 		}),
 	);
 
-	return {
+	logger.info("Caption batch complete", {
 		processed: results.length,
 		succeeded,
 		failed,
-		errors,
-	};
+	});
+
+	return { processed: results.length, succeeded, failed, errors };
 }

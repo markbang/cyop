@@ -1,5 +1,5 @@
 import { db } from "@cyop/db";
-import { desc, eq } from "@cyop/db/drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "@cyop/db/drizzle-orm";
 import {
 	automationTasks,
 	datasets,
@@ -10,6 +10,14 @@ import {
 import z from "zod";
 
 import { protectedProcedure, publicProcedure, router } from "../index";
+
+const listInput = z.object({
+	search: z.string().optional(),
+	status: z.enum(requirementStatusValues).optional(),
+	priority: z.enum(requirementPriorityValues).optional(),
+	limit: z.number().int().positive().max(100).default(50),
+	offset: z.number().int().nonnegative().default(0),
+});
 
 const requirementBaseInput = z.object({
 	title: z.string().min(2),
@@ -27,11 +35,44 @@ const requirementBaseInput = z.object({
 });
 
 export const requirementsRouter = router({
-	list: publicProcedure.query(async () => {
-		return await db
-			.select()
-			.from(requirements)
-			.orderBy(desc(requirements.updatedAt));
+	list: publicProcedure.input(listInput).query(async ({ input }) => {
+		const conditions = [];
+
+		if (input?.search) {
+			const pattern = `%${input.search}%`;
+			conditions.push(
+				or(
+					ilike(requirements.title, pattern),
+					ilike(requirements.description, pattern),
+					ilike(requirements.owner, pattern),
+				),
+			);
+		}
+		if (input?.status) {
+			conditions.push(eq(requirements.status, input.status));
+		}
+		if (input?.priority) {
+			conditions.push(eq(requirements.priority, input.priority));
+		}
+
+		const [countResult, rows] = await Promise.all([
+			db
+				.select({ total: sql<number>`count(*)::int` })
+				.from(requirements)
+				.where(conditions.length ? and(...conditions) : undefined),
+			db
+				.select()
+				.from(requirements)
+				.where(conditions.length ? and(...conditions) : undefined)
+				.orderBy(desc(requirements.updatedAt))
+				.limit(input?.limit ?? 50)
+				.offset(input?.offset ?? 0),
+		]);
+
+		return {
+			items: rows,
+			total: countResult[0]?.total ?? 0,
+		};
 	}),
 
 	create: protectedProcedure

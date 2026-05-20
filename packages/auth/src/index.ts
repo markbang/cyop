@@ -7,6 +7,8 @@ const env = ((
 	globalThis as { process?: { env?: Record<string, string | undefined> } }
 ).process?.env ?? {}) as Record<string, string | undefined>;
 
+const isProduction = env.NODE_ENV === "production";
+
 export const auth = betterAuth<BetterAuthOptions>({
 	database: drizzleAdapter(db, {
 		provider: "pg",
@@ -19,8 +21,8 @@ export const auth = betterAuth<BetterAuthOptions>({
 	},
 	advanced: {
 		defaultCookieAttributes: {
-			sameSite: "none",
-			secure: true,
+			sameSite: "lax",
+			secure: isProduction,
 			httpOnly: true,
 		},
 	},

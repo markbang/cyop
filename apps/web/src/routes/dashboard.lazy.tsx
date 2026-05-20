@@ -113,6 +113,7 @@ function DashboardView() {
 		priority: "medium",
 		tagHints: "",
 	});
+	const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
 	const [datasetForm, setDatasetForm] = useState({
 		requirementId: "",
 		name: "",
@@ -162,9 +163,9 @@ function DashboardView() {
 		}));
 	};
 
-	const requirementQuery = useQuery(trpc.requirement.list.queryOptions());
+	const requirementQuery = useQuery(trpc.requirement.list.queryOptions({}));
 	const statsQuery = useQuery(trpc.requirement.stats.queryOptions());
-	const datasetQuery = useQuery(trpc.dataset.list.queryOptions());
+	const datasetQuery = useQuery(trpc.dataset.list.queryOptions({}));
 	const taskQuery = useQuery(trpc.task.list.queryOptions());
 	const tagQuery = useQuery(trpc.tag.list.queryOptions());
 
@@ -231,8 +232,8 @@ function DashboardView() {
 		}),
 	);
 
-	const requirements = requirementQuery.data ?? [];
-	const datasets = datasetQuery.data ?? [];
+	const requirements = requirementQuery.data?.items ?? [];
+	const datasets = datasetQuery.data?.items ?? [];
 	const tasks = taskQuery.data ?? [];
 	const tags = tagQuery.data ?? [];
 	const stats = statsQuery.data;
@@ -450,13 +451,33 @@ function DashboardView() {
 								status === "blocked" ||
 								status === "qa";
 							return (
-								<div
+								// biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop drop target
+								<section
 									key={status}
-									className={`flex min-w-[280px] flex-col rounded-xl border p-1 ${
+									className={`flex min-w-[280px] flex-col rounded-xl border p-1 transition-colors ${
 										isSpecial
 											? "border-slate-200 bg-slate-50/50"
 											: "border-transparent bg-transparent"
-									}`}
+									} ${dragOverStatus === status ? "border-blue-400 bg-blue-50/50" : ""}`}
+									onDragOver={(e) => {
+										e.preventDefault();
+										e.dataTransfer.dropEffect = "move";
+										setDragOverStatus(status);
+									}}
+									onDragLeave={() => setDragOverStatus(null)}
+									onDrop={(e) => {
+										e.preventDefault();
+										setDragOverStatus(null);
+										const requirementId = e.dataTransfer.getData(
+											"text/requirement-id",
+										);
+										if (requirementId) {
+											updateRequirementStatus.mutate({
+												id: Number(requirementId),
+												status,
+											});
+										}
+									}}
 								>
 									<div className="mb-3 flex items-center justify-between px-2 pt-2">
 										<div>
@@ -475,16 +496,25 @@ function DashboardView() {
 										</Badge>
 									</div>
 
-									<div className="flex flex-1 flex-col gap-3 overflow-y-auto px-1">
+									<ul className="flex flex-1 list-none flex-col gap-3 overflow-y-auto px-1">
 										{requirementsInColumn.length === 0 ? (
 											<div className="flex h-24 items-center justify-center rounded-lg border border-slate-200 border-dashed bg-slate-50/50">
 												<span className="text-slate-400 text-xs">空</span>
 											</div>
 										) : (
 											requirementsInColumn.map((requirement) => (
-												<div
+												<li
+													draggable
+													onDragStart={(e) => {
+														e.dataTransfer.setData(
+															"text/requirement-id",
+															String(requirement.id),
+														);
+														e.dataTransfer.effectAllowed = "move";
+														setDragOverStatus(null);
+													}}
 													key={requirement.id}
-													className="group relative flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+													className="group relative flex cursor-grab flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md active:cursor-grabbing"
 												>
 													<div className="flex items-start justify-between gap-2">
 														<div>
@@ -566,11 +596,11 @@ function DashboardView() {
 															</option>
 														))}
 													</Select>
-												</div>
+												</li>
 											))
 										)}
-									</div>
-								</div>
+									</ul>
+								</section>
 							);
 						})}
 					</div>
