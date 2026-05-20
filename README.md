@@ -186,8 +186,8 @@ Migration files are in `packages/db/src/migrations/` and must be committed. Use 
 
 `packages/auth` 里默认把 cookie 设成了：
 
-- `sameSite: "none"`
-- `secure: true`
+- `sameSite: "lax"`
+- `secure: isProduction`
 - `httpOnly: true`
 
 所以如果你在本地调试登录流程，记得一起检查：

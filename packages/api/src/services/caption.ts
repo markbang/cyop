@@ -98,7 +98,6 @@ async function callCaptionApi(
 	});
 
 	if (!response.ok) {
-		const errorText = await response.text().catch(() => "");
 		const status = response.status;
 
 		// Retry on rate limits and server errors
@@ -114,7 +113,7 @@ async function callCaptionApi(
 			return callCaptionApi(job, modelOverride, attempt + 1);
 		}
 
-		throw new Error(`Caption API error ${status}: ${errorText.slice(0, 200)}`);
+		throw new Error(`Caption API error ${status}`);
 	}
 
 	const data = (await response.json()) as {
@@ -156,7 +155,10 @@ export async function generateCaption(
 	} catch (error) {
 		logger.error("Caption generation failed", {
 			durationMs: Date.now() - startTime,
-			error: error instanceof Error ? error.message : "Unknown error",
+			status:
+				error instanceof Error && error.message.startsWith("Caption API error ")
+					? error.message
+					: "Unknown error",
 		});
 		throw error;
 	}

@@ -45,15 +45,18 @@ export class ErrorBoundary extends Component<
 							<AlertTriangle className="mb-2 h-8 w-8 text-destructive" />
 							<CardTitle>Something went wrong</CardTitle>
 							<CardDescription>
-								{this.state.error.message || "An unexpected error occurred"}
+								{import.meta.env.DEV
+									? this.state.error.message || "An unexpected error occurred"
+									: "An unexpected error occurred"}
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="text-muted-foreground text-sm">
-							{this.state.error.message !== "An unexpected error occurred" && (
-								<pre className="max-h-32 overflow-auto rounded bg-muted p-2 text-xs">
-									{this.state.error.stack?.split("\n").slice(0, 4).join("\n")}
-								</pre>
-							)}
+							{import.meta.env.DEV &&
+								this.state.error.message !== "An unexpected error occurred" && (
+									<pre className="max-h-32 overflow-auto rounded bg-muted p-2 text-xs">
+										{this.state.error.stack?.split("\n").slice(0, 4).join("\n")}
+									</pre>
+								)}
 						</CardContent>
 						<CardFooter>
 							<Button

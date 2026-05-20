@@ -230,7 +230,7 @@ server {
 }
 ```
 
-HTTPS is required in production for auth cookies (`secure: true`).
+HTTPS is required in production for auth cookies (`secure: isProduction`).
 
 ---
 
@@ -257,8 +257,9 @@ open https://yourdomain.com
 
 ```bash
 # Database rollback (if needed)
-git checkout <previous-commit> -- packages/db/src/migrations/
-bun run db:migrate  # drizzle-kit will detect and revert
+# 1. Restore the database from a known-good backup or point-in-time snapshot.
+# 2. Re-apply any forward-fix migration if later schema changes must stay in place.
+# Drizzle migrate does not automatically reverse schema changes.
 
 # Application rollback
 git checkout <previous-tag>
