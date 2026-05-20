@@ -247,14 +247,14 @@ function EditorView() {
 	};
 
 	return (
-		<div className="flex h-screen w-full flex-col bg-slate-50 font-sans text-slate-800 dark:bg-slate-950 dark:text-slate-200">
-			<header className="sticky top-4 z-50 mx-4 mb-4 rounded-2xl border border-slate-200 bg-white/90 px-6 py-4 shadow-sm backdrop-blur-xl transition-all dark:border-slate-800 dark:bg-slate-900/90">
+		<div className="flex h-screen w-full flex-col bg-background font-sans text-foreground">
+			<header className="sticky top-4 z-50 mx-4 mb-4 rounded-2xl border border-border bg-card/90 px-6 py-4 shadow-sm backdrop-blur-xl transition-all dark:border-border/40">
 				<div className="flex flex-wrap items-center justify-between gap-6">
 					<div className="flex flex-col gap-1">
-						<h1 className="font-semibold text-2xl text-slate-900 tracking-tight dark:text-slate-50">
+						<h1 className="font-semibold text-2xl text-foreground tracking-tight">
 							Caption 审核台
 						</h1>
-						<p className="text-slate-500 text-sm dark:text-slate-400">
+						<p className="text-muted-foreground text-sm">
 							高效浏览、编辑与验收 AI 生成的图像描述
 						</p>
 					</div>
@@ -267,7 +267,7 @@ function EditorView() {
 									resetSelection();
 									setDatasetId(e.target.value);
 								}}
-								className="h-9 w-[180px] border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:ring-blue-900"
+								className="h-9 w-[180px] border-border bg-background text-sm focus:ring-2 focus:ring-blue-100/50 dark:border-border dark:bg-background dark:text-foreground"
 							>
 								<option value="">所有数据集</option>
 								{datasetsQuery.data?.items?.map((ds) => (
@@ -283,7 +283,7 @@ function EditorView() {
 									resetSelection();
 									setStatusFilter(e.target.value);
 								}}
-								className="h-9 w-[140px] border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:ring-blue-900"
+								className="h-9 w-[140px] border-border bg-background text-sm focus:ring-2 focus:ring-blue-100/50 dark:border-border dark:bg-background dark:text-foreground"
 							>
 								<option value="">所有状态</option>
 								{Object.entries(statusLabels).map(([key, label]) => (
@@ -294,7 +294,7 @@ function EditorView() {
 							</Select>
 						</div>
 
-						<div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
+						<div className="h-6 w-px bg-border dark:bg-border/60" />
 
 						<div className="flex items-center gap-2">
 							<Button
@@ -304,7 +304,7 @@ function EditorView() {
 									captionsQuery.refetch();
 									statsQuery.refetch();
 								}}
-								className="h-9 border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+								className="h-9 border-border text-foreground hover:bg-muted dark:border-border/40 dark:hover:bg-muted"
 							>
 								{captionsQuery.isFetching ? (
 									<Loader2 className="mr-2 size-4 animate-spin" />
@@ -322,7 +322,7 @@ function EditorView() {
 									batchApproveMutation.isPending ||
 									approvableCaptionIds.length === 0
 								}
-								className="h-9 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+								className="h-9 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-950/40 dark:text-blue-400"
 							>
 								<CheckCircle2 className="mr-2 size-4 text-blue-600 dark:text-blue-400" />
 								批量通过
@@ -336,7 +336,7 @@ function EditorView() {
 									regenerateMutation.isPending ||
 									rejectedCaptionIds.length === 0
 								}
-								className="h-9 border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+								className="h-9 border-border text-foreground hover:bg-muted dark:border-border/40 dark:hover:bg-muted"
 							>
 								{regenerateMutation.isPending ? (
 									<Loader2 className="mr-2 size-4 animate-spin" />
@@ -354,7 +354,7 @@ function EditorView() {
 										if (format) handleExport(format);
 									}}
 									disabled={isExporting}
-									className="h-9 w-[100px] border-slate-200 bg-white pl-9 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+									className="h-9 w-[100px] border-border bg-background pl-9 text-sm dark:border-border dark:bg-background dark:text-foreground"
 								>
 									<option value="" disabled>
 										{isExporting ? "..." : "导出"}
@@ -369,7 +369,7 @@ function EditorView() {
 					</div>
 				</div>
 
-				<div className="mt-6 flex items-center gap-4 border-slate-100 border-t pt-4 dark:border-slate-800">
+				<div className="mt-6 flex items-center gap-4 border-border border-t pt-4 dark:border-border/40">
 					<StatBadge
 						label="待审核"
 						count={statsQuery.data?.completed ?? 0}
@@ -390,18 +390,18 @@ function EditorView() {
 						count={statsQuery.data?.processing ?? 0}
 						color="default"
 					/>
-					<div className="ml-auto flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600 text-xs dark:bg-slate-800 dark:text-slate-400">
+					<div className="ml-auto flex items-center gap-2 rounded-full bg-muted px-3 py-1 font-medium text-muted-foreground text-xs">
 						<span>总计: {statsQuery.data?.total ?? 0}</span>
 					</div>
 				</div>
 			</header>
 
 			<main className="flex flex-1 gap-6 overflow-hidden px-4 pb-4">
-				<aside className="flex w-80 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+				<aside className="flex w-80 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:border-border/40">
 					<div className="flex-1 overflow-y-auto p-3">
 						<div className="space-y-2">
 							{captions.length === 0 ? (
-								<div className="flex h-40 flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-600">
+								<div className="flex h-40 flex-col items-center justify-center gap-2 text-muted-foreground">
 									<Filter className="size-8 opacity-20" />
 									<span className="text-sm">没有找到相关条目</span>
 								</div>
@@ -413,11 +413,11 @@ function EditorView() {
 										onClick={() => selectCaption(caption.id)}
 										className={`group relative flex w-full cursor-pointer gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
 											selectedId === caption.id
-												? "border-blue-200 bg-blue-50/50 shadow-sm ring-1 ring-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:ring-blue-900/30"
-												: "border-transparent hover:border-slate-100 hover:bg-slate-50 dark:hover:border-slate-800 dark:hover:bg-slate-800/50"
+												? "border-blue-500/30 bg-blue-500/5 shadow-sm ring-1 ring-blue-500/10 dark:border-blue-500/40 dark:bg-blue-950/20"
+												: "border-transparent hover:border-border hover:bg-muted dark:hover:border-border/40 dark:hover:bg-muted/50"
 										}`}
 									>
-										<div className="relative size-16 flex-none overflow-hidden rounded-lg border border-slate-100 bg-slate-100 dark:border-slate-800 dark:bg-slate-800">
+										<div className="relative size-16 flex-none overflow-hidden rounded-lg border border-border bg-muted">
 											{caption.mediaAsset?.publicUrl ? (
 												<img
 													src={caption.mediaAsset.publicUrl}
@@ -427,13 +427,13 @@ function EditorView() {
 												/>
 											) : (
 												<div className="flex size-full items-center justify-center">
-													<ImageIcon className="size-6 text-slate-300 dark:text-slate-600" />
+													<ImageIcon className="size-6 text-muted-foreground/60" />
 												</div>
 											)}
 										</div>
 										<div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
 											<div className="flex items-center justify-between gap-2">
-												<span className="font-semibold text-slate-700 text-xs dark:text-slate-300">
+												<span className="font-semibold text-foreground text-xs">
 													#{caption.id}
 												</span>
 												<div
@@ -442,13 +442,13 @@ function EditorView() {
 													)}`}
 												/>
 											</div>
-											<p className="line-clamp-2 text-slate-500 text-xs leading-relaxed dark:text-slate-400">
+											<p className="line-clamp-2 text-muted-foreground text-xs leading-relaxed">
 												{caption.manualCaption ||
 													caption.aiCaption ||
 													"暂无描述..."}
 											</p>
 											<time
-												className="mt-1 text-[10px] text-slate-400 dark:text-slate-500"
+												className="mt-1 text-[10px] text-muted-foreground/80"
 												dateTime={new Date(caption.updatedAt).toISOString()}
 												suppressHydrationWarning
 											>
@@ -462,10 +462,10 @@ function EditorView() {
 					</div>
 				</aside>
 
-				<section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+				<section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:border-border/40">
 					{selectedCaption ? (
 						<div className="flex h-full flex-col lg:flex-row">
-							<div className="flex flex-1 flex-col border-slate-100 border-b bg-slate-50/50 lg:w-1/2 lg:border-r lg:border-b-0 dark:border-slate-800 dark:bg-slate-950/50">
+							<div className="flex flex-1 flex-col border-border border-b bg-muted/20 lg:w-1/2 lg:border-r lg:border-b-0 dark:border-border/40">
 								<div className="flex flex-1 items-center justify-center p-6">
 									<div className="relative flex size-full items-center justify-center">
 										{selectedCaption.mediaAsset?.publicUrl ? (
@@ -476,51 +476,43 @@ function EditorView() {
 											/>
 										) : (
 											<div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-600">
-												<ImageIcon className="size-16 opacity-20" />
+												<ImageIcon className="size-16 text-muted-foreground/60" />
 												<span className="text-sm">无法加载预览图</span>
 											</div>
 										)}
 									</div>
 								</div>
 
-								<div className="border-slate-200 border-t bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-									<h3 className="mb-4 font-semibold text-slate-900 text-sm dark:text-slate-100">
+								<div className="border-border border-t bg-card p-6 dark:border-border/40">
+									<h3 className="mb-4 font-semibold text-foreground text-sm">
 										Metadata
 									</h3>
 									<div className="grid grid-cols-2 gap-x-8 gap-y-4 text-xs">
-										<div className="flex justify-between border-slate-50 border-b pb-2 dark:border-slate-800">
-											<span className="text-slate-500 dark:text-slate-400">
-												模型
-											</span>
-											<span className="font-medium text-slate-700 dark:text-slate-300">
+										<div className="flex justify-between border-border/40 border-b pb-2">
+											<span className="text-muted-foreground">模型</span>
+											<span className="font-medium text-foreground">
 												{selectedCaption.model ?? "Unknown"}
 											</span>
 										</div>
-										<div className="flex justify-between border-slate-50 border-b pb-2 dark:border-slate-800">
-											<span className="text-slate-500 dark:text-slate-400">
-												置信度
-											</span>
-											<span className="font-medium text-slate-700 dark:text-slate-300">
+										<div className="flex justify-between border-border/40 border-b pb-2">
+											<span className="text-muted-foreground">置信度</span>
+											<span className="font-medium text-foreground">
 												{selectedCaption.confidence != null
 													? `${Math.round(selectedCaption.confidence * 100)}%`
 													: "N/A"}
 											</span>
 										</div>
-										<div className="flex justify-between border-slate-50 border-b pb-2 dark:border-slate-800">
-											<span className="text-slate-500 dark:text-slate-400">
-												尺寸
-											</span>
-											<span className="font-medium text-slate-700 dark:text-slate-300">
+										<div className="flex justify-between border-border/40 border-b pb-2">
+											<span className="text-muted-foreground">尺寸</span>
+											<span className="font-medium text-foreground">
 												{selectedCaption.mediaAsset?.width} x{" "}
 												{selectedCaption.mediaAsset?.height}
 											</span>
 										</div>
-										<div className="flex justify-between border-slate-50 border-b pb-2 dark:border-slate-800">
-											<span className="text-slate-500 dark:text-slate-400">
-												Prompt
-											</span>
+										<div className="flex justify-between border-border/40 border-b pb-2">
+											<span className="text-muted-foreground">Prompt</span>
 											<span
-												className="max-w-[120px] truncate font-medium text-slate-700 dark:text-slate-300"
+												className="max-w-[120px] truncate font-medium text-foreground"
 												title={
 													selectedCaption.promptTemplate?.userPromptTemplate
 												}
@@ -532,13 +524,13 @@ function EditorView() {
 								</div>
 							</div>
 
-							<div className="flex flex-1 flex-col bg-white lg:w-1/2 dark:bg-slate-900">
-								<div className="flex items-center justify-between border-slate-100 border-b px-6 py-4 dark:border-slate-800">
+							<div className="flex flex-1 flex-col bg-card lg:w-1/2 dark:bg-card">
+								<div className="flex items-center justify-between border-border border-b px-6 py-4 dark:border-border/40">
 									<div>
-										<h2 className="font-semibold text-lg text-slate-900 dark:text-slate-50">
+										<h2 className="font-semibold text-foreground text-lg">
 											编辑描述
 										</h2>
-										<p className="text-slate-500 text-xs dark:text-slate-400">
+										<p className="text-muted-foreground text-xs">
 											AI 生成结果可能需要人工微调
 										</p>
 									</div>
@@ -554,7 +546,7 @@ function EditorView() {
 								<div className="flex flex-1 flex-col gap-4 p-6">
 									<div className="relative flex-1">
 										<Textarea
-											className="h-full w-full resize-none border-slate-200 bg-slate-50 p-4 text-base text-slate-800 leading-relaxed placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:ring-blue-500/30 dark:placeholder:text-slate-600"
+											className="h-full w-full resize-none border-border bg-muted p-4 text-base text-foreground leading-relaxed placeholder:text-muted-foreground focus:border-blue-500 focus:ring-blue-500/20 dark:border-border/60 dark:bg-background dark:text-foreground dark:focus:ring-blue-500/30 dark:placeholder:text-muted-foreground/60"
 											placeholder="请输入图片描述..."
 											value={editValue}
 											onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -563,19 +555,19 @@ function EditorView() {
 										/>
 									</div>
 
-									<div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
-										<div className="mb-2 flex items-center gap-2">
-											<span className="font-semibold text-slate-500 text-xs uppercase tracking-wider dark:text-slate-400">
+									<div className="space-y-1.5 rounded-r-lg border-blue-500/40 border-l-4 bg-muted/30 p-3.5">
+										<div className="flex items-center gap-2">
+											<span className="font-semibold text-[10px] text-muted-foreground uppercase tracking-wider">
 												AI 参考
 											</span>
 										</div>
-										<p className="text-slate-600 text-xs italic leading-relaxed dark:text-slate-400">
+										<p className="font-sans text-muted-foreground text-xs italic leading-relaxed">
 											{selectedCaption.aiCaption || "无 AI 生成内容"}
 										</p>
 									</div>
 								</div>
 
-								<div className="border-slate-100 border-t bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/50">
+								<div className="border-border border-t bg-muted/20 px-6 py-4 dark:border-border/40 dark:bg-background/50">
 									<div className="flex flex-col gap-4">
 										<div className="grid grid-cols-2 gap-4">
 											<Button
@@ -615,7 +607,7 @@ function EditorView() {
 											<Button
 												variant="ghost"
 												size="sm"
-												className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+												className="text-muted-foreground hover:text-foreground"
 												onClick={handleRegenerate}
 												disabled={regenerateMutation.isPending}
 											>
@@ -629,7 +621,7 @@ function EditorView() {
 												<Button
 													variant="ghost"
 													size="icon"
-													className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+													className="size-8 rounded-full border border-border bg-card text-foreground hover:bg-muted dark:border-border/40 dark:bg-card dark:text-foreground dark:hover:bg-muted"
 													onClick={selectPrevious}
 													disabled={selectedIndex <= 0}
 												>
@@ -638,7 +630,7 @@ function EditorView() {
 												<Button
 													variant="ghost"
 													size="icon"
-													className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+													className="size-8 rounded-full border border-border bg-card text-foreground hover:bg-muted dark:border-border/40 dark:bg-card dark:text-foreground dark:hover:bg-muted"
 													onClick={selectNext}
 													disabled={
 														selectedIndex === -1 ||
@@ -654,14 +646,14 @@ function EditorView() {
 							</div>
 						</div>
 					) : (
-						<div className="flex h-full flex-col items-center justify-center bg-slate-50/50 text-slate-400 dark:bg-slate-950/50 dark:text-slate-600">
-							<div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-800">
-								<Filter className="size-10 text-slate-300 dark:text-slate-700" />
+						<div className="flex h-full flex-col items-center justify-center bg-muted/20 text-muted-foreground dark:bg-background/50">
+							<div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border dark:bg-card dark:ring-border/40">
+								<Filter className="size-10 text-muted-foreground/60" />
 							</div>
-							<h3 className="mt-6 font-semibold text-slate-700 dark:text-slate-300">
+							<h3 className="mt-6 font-semibold text-foreground">
 								请选择一个 Caption
 							</h3>
-							<p className="mt-2 text-slate-500 text-sm dark:text-slate-400">
+							<p className="mt-2 text-muted-foreground text-sm">
 								从左侧列表中点击任意项目开始审核
 							</p>
 						</div>
@@ -683,15 +675,14 @@ function StatBadge({
 }) {
 	const colorClasses = {
 		default:
-			"bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-		secondary:
-			"bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+			"bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400 dark:border-blue-500/30",
+		secondary: "bg-muted text-muted-foreground border-border",
 		success:
-			"bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
+			"bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30",
 		warning:
-			"bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+			"bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400 dark:border-amber-500/30",
 		destructive:
-			"bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+			"bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400 dark:border-red-500/30",
 	};
 
 	return (
@@ -715,21 +706,21 @@ function getStatusDotColor(status: string) {
 		case "processing":
 			return "bg-blue-500 dark:bg-blue-400";
 		default:
-			return "bg-slate-300 dark:bg-slate-600";
+			return "bg-muted text-muted-foreground/60";
 	}
 }
 
 function getStatusBadgeStyle(status: string) {
 	switch (status) {
 		case "approved":
-			return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-transparent dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/40";
+			return "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 border-transparent dark:text-emerald-400";
 		case "rejected":
-			return "bg-red-100 text-red-700 hover:bg-red-100 border-transparent dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/40";
+			return "bg-red-500/10 text-red-600 hover:bg-red-500/15 border-transparent dark:text-red-400";
 		case "completed":
-			return "bg-amber-100 text-amber-700 hover:bg-amber-100 border-transparent dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/40";
+			return "bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 border-transparent dark:text-amber-400";
 		case "processing":
-			return "bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/40";
+			return "bg-blue-500/10 text-blue-600 hover:bg-blue-500/15 border-transparent dark:text-blue-400";
 		default:
-			return "bg-slate-100 text-slate-700 hover:bg-slate-100 border-transparent dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/80";
+			return "bg-muted text-muted-foreground hover:bg-muted/80 border-transparent";
 	}
 }

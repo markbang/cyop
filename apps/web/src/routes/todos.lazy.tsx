@@ -297,11 +297,11 @@ function AiOps() {
 							刷新
 						</Button>
 						{models.data?.length ? (
-							<div className="space-y-3">
+							<div className="divide-y divide-border/40">
 								{models.data.map((model) => (
 									<div
 										key={model.id}
-										className="flex items-center justify-between rounded-lg border px-3 py-2"
+										className="flex items-center justify-between rounded-lg px-2 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-muted/10"
 									>
 										<div>
 											<div className="flex items-center gap-2">
@@ -313,7 +313,7 @@ function AiOps() {
 													<Badge variant="destructive">停用</Badge>
 												)}
 											</div>
-											<p className="text-muted-foreground text-xs">
+											<p className="mt-0.5 text-muted-foreground text-xs">
 												{model.provider} · {model.modelName} ·{" "}
 												{model.baseUrl || "系统默认 Base URL"}
 											</p>
@@ -401,7 +401,7 @@ function AiOps() {
 						<div className="space-y-1.5">
 							<Label>数据集</Label>
 							<select
-								className="h-10 w-full rounded-md border px-3 text-sm"
+								className="h-10 w-full rounded-md border border-border bg-background px-3 text-foreground text-sm"
 								value={batchDataset}
 								onChange={(event: ChangeEvent<HTMLSelectElement>) => {
 									setBatchDataset(event.target.value);
@@ -419,7 +419,7 @@ function AiOps() {
 						<div className="space-y-1.5">
 							<Label>模型</Label>
 							<select
-								className="h-10 w-full rounded-md border px-3 text-sm"
+								className="h-10 w-full rounded-md border border-border bg-background px-3 text-foreground text-sm"
 								value={batchModel}
 								onChange={(event: ChangeEvent<HTMLSelectElement>) =>
 									setBatchModel(event.target.value)
@@ -523,12 +523,12 @@ function AiOps() {
 						刷新
 					</Button>
 				</CardHeader>
-				<CardContent className="space-y-2">
+				<CardContent className="divide-y divide-border/40 pt-2">
 					{jobs.data?.items.length ? (
 						jobs.data.items.map((job) => (
 							<div
 								key={job.id}
-								className="flex flex-col gap-1 rounded-lg border px-3 py-2 text-sm md:flex-row md:items-center md:justify-between"
+								className="flex flex-col gap-1 rounded-lg px-2 py-3 text-sm transition-colors hover:bg-muted/10 md:flex-row md:items-center md:justify-between"
 							>
 								<div>
 									<div className="flex items-center gap-2">
@@ -543,14 +543,14 @@ function AiOps() {
 											{job.model?.name ?? "默认模型"}
 										</span>
 									</div>
-									<p className="text-muted-foreground">
+									<p className="mt-0.5 text-muted-foreground">
 										{job.dataset?.name ?? "未关联数据集"} ·{" "}
 										{job.asset?.originalName ?? "自定义图片"} ·{" "}
 										{job.caption?.slice(0, 120) ?? job.error}
 									</p>
 								</div>
 								<time
-									className="text-muted-foreground text-xs"
+									className="shrink-0 text-muted-foreground text-xs"
 									dateTime={new Date(
 										job.completedAt ?? job.createdAt,
 									).toISOString()}
@@ -563,7 +563,7 @@ function AiOps() {
 							</div>
 						))
 					) : (
-						<p className="text-muted-foreground text-sm">暂无任务</p>
+						<p className="py-4 text-muted-foreground text-sm">暂无任务</p>
 					)}
 					<div className="flex items-center justify-between pt-2">
 						<p className="text-muted-foreground text-xs">

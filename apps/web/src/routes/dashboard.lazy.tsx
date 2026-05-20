@@ -73,31 +73,31 @@ const getStatusBadgeStyles = (status: string) => {
 	switch (status) {
 		case "intake":
 		case "design":
-			return "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-100";
+			return "bg-muted text-muted-foreground border-border hover:bg-muted/80";
 		case "sourcing":
 		case "labeling":
-			return "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100";
+			return "bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/15 dark:text-blue-400";
 		case "qa":
 		case "paused":
 		case "warning":
 		case "medium":
-			return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100";
+			return "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/15 dark:text-amber-400";
 		case "completed":
 		case "succeeded":
 		case "low":
-			return "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
+			return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/15 dark:text-emerald-400";
 		case "blocked":
 		case "failed":
 		case "urgent":
 		case "high":
 		case "destructive":
-			return "bg-red-100 text-red-700 border-red-200 hover:bg-red-100";
+			return "bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/15 dark:text-red-400";
 		case "running":
-			return "bg-blue-50 text-blue-600 border-blue-100 animate-pulse";
+			return "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400 animate-pulse";
 		case "queued":
-			return "bg-slate-100 text-slate-500 border-slate-200";
+			return "bg-muted text-muted-foreground border-border";
 		default:
-			return "bg-slate-100 text-slate-600 border-slate-200";
+			return "bg-muted text-muted-foreground border-border";
 	}
 };
 
@@ -333,10 +333,10 @@ function DashboardView() {
 	};
 
 	return (
-		<div className="min-h-screen bg-slate-50 text-slate-900">
+		<div className="min-h-screen bg-background text-foreground">
 			<div className="mx-auto flex max-w-[1600px] flex-col gap-8 p-6 md:p-8">
-				<section className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/80 p-6 shadow-sm backdrop-blur-xl transition-all hover:shadow-md">
-					<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-transparent opacity-50" />
+				<section className="relative overflow-hidden rounded-2xl border bg-card/80 p-6 shadow-sm backdrop-blur-xl transition-all hover:shadow-md dark:border-border/40">
+					<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-50" />
 					<div className="relative z-10 flex flex-wrap items-start justify-between gap-6">
 						<div className="space-y-4">
 							<div className="flex items-center gap-3">
@@ -344,16 +344,16 @@ function DashboardView() {
 									<LayoutDashboard className="size-5" />
 								</div>
 								<div>
-									<h1 className="font-bold text-2xl text-slate-900 tracking-tight lg:text-3xl">
+									<h1 className="font-bold text-2xl text-foreground tracking-tight lg:text-3xl">
 										CYOP 控制塔
 									</h1>
-									<p className="flex items-center gap-2 text-slate-500 text-sm">
+									<p className="flex items-center gap-2 text-muted-foreground text-sm">
 										<span className="inline-block size-2 rounded-full bg-emerald-500" />
 										图像生产全链路 · 实时调度
 									</p>
 								</div>
 							</div>
-							<p className="max-w-2xl text-slate-600 text-sm leading-relaxed">
+							<p className="max-w-2xl text-muted-foreground text-sm leading-relaxed">
 								集中管理需求、数据集与自动化任务，追踪 AI
 								Caption、标签覆盖率和批量处理进度。
 							</p>
@@ -363,7 +363,7 @@ function DashboardView() {
 							<Button
 								variant="outline"
 								onClick={refreshAll}
-								className="border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
+								className="border-border bg-card text-card-foreground transition-colors hover:bg-muted hover:text-foreground"
 							>
 								{statsQuery.isRefetching ? (
 									<Loader2 className="mr-2 size-4 animate-spin text-blue-600" />
@@ -426,10 +426,10 @@ function DashboardView() {
 				<section className="space-y-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<h2 className="font-semibold text-slate-900 text-xl tracking-tight">
+							<h2 className="font-semibold text-foreground text-xl tracking-tight">
 								需求看板
 							</h2>
-							<p className="mt-1 text-slate-500 text-sm">
+							<p className="mt-1 text-muted-foreground text-sm">
 								全流程可视化管理，拖拽式布局（待实现）可快速获知瓶颈。
 							</p>
 						</div>
@@ -456,7 +456,7 @@ function DashboardView() {
 									key={status}
 									className={`flex min-w-[280px] flex-col rounded-xl border p-1 transition-colors ${
 										isSpecial
-											? "border-slate-200 bg-slate-50/50"
+											? "border-border bg-muted/40"
 											: "border-transparent bg-transparent"
 									} ${dragOverStatus === status ? "border-blue-400 bg-blue-50/50" : ""}`}
 									onDragOver={(e) => {
@@ -481,10 +481,10 @@ function DashboardView() {
 								>
 									<div className="mb-3 flex items-center justify-between px-2 pt-2">
 										<div>
-											<h3 className="font-semibold text-slate-700 text-sm">
+											<h3 className="font-semibold text-foreground text-sm">
 												{statusCopy[status].label}
 											</h3>
-											<p className="text-slate-400 text-xs">
+											<p className="text-muted-foreground text-xs">
 												{statusCopy[status].helper}
 											</p>
 										</div>
@@ -498,8 +498,10 @@ function DashboardView() {
 
 									<ul className="flex flex-1 list-none flex-col gap-3 overflow-y-auto px-1">
 										{requirementsInColumn.length === 0 ? (
-											<div className="flex h-24 items-center justify-center rounded-lg border border-slate-200 border-dashed bg-slate-50/50">
-												<span className="text-slate-400 text-xs">空</span>
+											<div className="flex h-24 items-center justify-center rounded-lg border border-border border-dashed bg-muted/20">
+												<span className="text-muted-foreground text-xs">
+													空
+												</span>
 											</div>
 										) : (
 											requirementsInColumn.map((requirement) => (
@@ -514,17 +516,17 @@ function DashboardView() {
 														setDragOverStatus(null);
 													}}
 													key={requirement.id}
-													className="group relative flex cursor-grab flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md active:cursor-grabbing"
+													className="group relative flex cursor-grab flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-500/50 hover:shadow-md active:cursor-grabbing"
 												>
 													<div className="flex items-start justify-between gap-2">
 														<div>
-															<h4 className="line-clamp-2 font-medium text-slate-900 text-sm leading-snug transition-colors group-hover:text-blue-600">
+															<h4 className="line-clamp-2 font-medium text-foreground text-sm leading-snug transition-colors group-hover:text-blue-500">
 																{requirement.title}
 															</h4>
-															<div className="mt-1 flex items-center gap-2 text-slate-500 text-xs">
+															<div className="mt-1 flex items-center gap-2 text-muted-foreground text-xs">
 																<Users2 className="size-3" />
 																<span>{requirement.owner}</span>
-																<span className="text-slate-300">|</span>
+																<span className="text-muted/40">|</span>
 																<span>{requirement.team}</span>
 															</div>
 														</div>
@@ -538,7 +540,7 @@ function DashboardView() {
 														)}
 													</div>
 
-													<p className="line-clamp-2 text-slate-600 text-xs">
+													<p className="line-clamp-2 text-muted-foreground text-xs">
 														{requirement.description}
 													</p>
 
@@ -547,32 +549,32 @@ function DashboardView() {
 															requirement.tagHints.slice(0, 3).map((tag) => (
 																<span
 																	key={tag}
-																	className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-[10px] text-slate-600"
+																	className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-medium text-[10px] text-muted-foreground"
 																>
 																	#{tag}
 																</span>
 															))
 														) : (
-															<span className="text-[10px] text-slate-400 italic">
+															<span className="text-[10px] text-muted-foreground italic">
 																无标签
 															</span>
 														)}
 													</div>
 
-													<div className="mt-1 grid grid-cols-2 gap-2 border-slate-100 border-t pt-2">
+													<div className="mt-1 grid grid-cols-2 gap-2 border-border/60 border-t pt-2">
 														<div className="text-center">
-															<p className="font-medium font-mono text-slate-700 text-xs">
+															<p className="font-medium font-mono text-foreground text-xs">
 																{requirement.expectedImages}
 															</p>
-															<p className="text-[10px] text-slate-400">
+															<p className="text-[10px] text-muted-foreground">
 																目标量
 															</p>
 														</div>
 														<div className="text-center">
-															<p className="font-medium font-mono text-blue-600 text-xs">
+															<p className="font-medium font-mono text-blue-500 text-xs">
 																{requirement.aiCoverageTarget}%
 															</p>
-															<p className="text-[10px] text-slate-400">
+															<p className="text-[10px] text-muted-foreground">
 																AI 目标
 															</p>
 														</div>
@@ -588,7 +590,7 @@ function DashboardView() {
 															})
 														}
 														disabled={updateRequirementStatus.isPending}
-														className="mt-1 h-7 w-full border-slate-200 bg-slate-50 text-xs focus:border-blue-500 focus:ring-blue-100"
+														className="mt-1 h-7 w-full border-border bg-background text-xs focus:border-blue-500 focus:ring-blue-100/50"
 													>
 														{statusOrder.map((val) => (
 															<option key={val} value={val}>
@@ -607,15 +609,15 @@ function DashboardView() {
 				</section>
 
 				<section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-					<Card className="border-slate-200 shadow-sm">
-						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+					<Card className="border-border shadow-sm">
+						<CardHeader className="border-border border-b bg-muted/30 px-6 py-4">
 							<div className="flex items-center gap-2">
 								<Database className="size-5 text-blue-500" />
 								<div>
-									<CardTitle className="text-base text-slate-800">
+									<CardTitle className="text-base text-foreground">
 										数据集健康度
 									</CardTitle>
-									<CardDescription className="text-slate-500 text-xs">
+									<CardDescription className="text-muted-foreground text-xs">
 										总览 AI Caption、标签覆盖率与待处理容量
 									</CardDescription>
 								</div>
@@ -624,7 +626,7 @@ function DashboardView() {
 						<CardContent className="p-0">
 							<div className="overflow-x-auto">
 								<table className="w-full text-left text-sm">
-									<thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+									<thead className="bg-muted/50 text-muted-foreground text-xs uppercase">
 										<tr>
 											<th className="px-6 py-3 font-medium">数据集</th>
 											<th className="px-6 py-3 font-medium">进度概览</th>
@@ -639,12 +641,12 @@ function DashboardView() {
 											</th>
 										</tr>
 									</thead>
-									<tbody className="divide-y divide-slate-100">
+									<tbody className="divide-y divide-border">
 										{datasets.length === 0 ? (
 											<tr>
 												<td
 													colSpan={5}
-													className="py-8 text-center text-slate-500"
+													className="py-8 text-center text-muted-foreground"
 												>
 													暂无数据
 												</td>
@@ -661,58 +663,58 @@ function DashboardView() {
 												return (
 													<tr
 														key={dataset.id}
-														className="group transition-colors hover:bg-slate-50/60"
+														className="group transition-colors hover:bg-muted/40"
 													>
 														<td className="px-6 py-4">
-															<p className="font-medium text-slate-900 transition-colors group-hover:text-blue-600">
+															<p className="font-medium text-foreground transition-colors group-hover:text-blue-500">
 																{dataset.name}
 															</p>
-															<p className="text-slate-500 text-xs">
+															<p className="text-muted-foreground text-xs">
 																{dataset.requirement?.title ?? "未关联需求"}
 															</p>
 														</td>
 														<td className="px-6 py-4">
 															<div className="flex flex-col gap-1">
 																<div className="flex justify-between text-xs">
-																	<span className="text-slate-500">
+																	<span className="text-muted-foreground">
 																		处理进度
 																	</span>
-																	<span className="font-medium text-slate-700">
+																	<span className="font-medium text-foreground">
 																		{100 - pendingRate}%
 																	</span>
 																</div>
 																<Progress
 																	value={100 - pendingRate}
-																	className="h-1.5 bg-slate-100"
+																	className="h-1.5 bg-muted"
 																	indicatorClassName="bg-blue-500"
 																/>
 															</div>
 														</td>
 														<td className="px-6 py-4 text-center">
 															<div className="inline-flex flex-col items-center">
-																<span className="font-medium font-mono text-slate-700">
+																<span className="font-medium font-mono text-foreground">
 																	{dataset.aiCaptionCoverage}%
 																</span>
 																<Progress
 																	value={dataset.aiCaptionCoverage}
-																	className="mt-1 h-1 w-16 bg-slate-100"
+																	className="mt-1 h-1 w-16 bg-muted"
 																	indicatorClassName="bg-indigo-500"
 																/>
 															</div>
 														</td>
 														<td className="px-6 py-4 text-center">
 															<div className="inline-flex flex-col items-center">
-																<span className="font-medium font-mono text-slate-700">
+																<span className="font-medium font-mono text-foreground">
 																	{dataset.autoTagCoverage}%
 																</span>
 																<Progress
 																	value={dataset.autoTagCoverage}
-																	className="mt-1 h-1 w-16 bg-slate-100"
+																	className="mt-1 h-1 w-16 bg-muted"
 																	indicatorClassName="bg-emerald-500"
 																/>
 															</div>
 														</td>
-														<td className="px-6 py-4 text-right font-mono text-slate-500 text-xs">
+														<td className="px-6 py-4 text-right font-mono text-muted-foreground text-xs">
 															{dataset.storageBucket}
 														</td>
 													</tr>
@@ -726,15 +728,15 @@ function DashboardView() {
 					</Card>
 
 					<div ref={createPanelRef} className="flex flex-col">
-						<Card className="flex-1 border-slate-200 shadow-sm">
-							<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+						<Card className="flex-1 border-border shadow-sm">
+							<CardHeader className="border-border border-b bg-muted/30 px-6 py-4">
 								<div className="flex items-center gap-2">
 									<Plus className="size-5 text-orange-500" />
 									<div>
-										<CardTitle className="text-base text-slate-800">
+										<CardTitle className="text-base text-foreground">
 											快速创建需求
 										</CardTitle>
-										<CardDescription className="text-slate-500 text-xs">
+										<CardDescription className="text-muted-foreground text-xs">
 											生成需求与数据集骨架
 										</CardDescription>
 									</div>
@@ -746,7 +748,7 @@ function DashboardView() {
 										<Input
 											required
 											placeholder="需求标题"
-											className="border-slate-200 focus:border-blue-500 focus:ring-blue-100"
+											className="border-border focus:border-blue-500 focus:ring-blue-100/50"
 											value={formState.title}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
 												updateFormState("title", e.target.value)
@@ -755,7 +757,7 @@ function DashboardView() {
 										<Textarea
 											required
 											placeholder="需求背景、业务目标..."
-											className="min-h-[80px] border-slate-200 focus:border-blue-500 focus:ring-blue-100"
+											className="min-h-[80px] border-border focus:border-blue-500 focus:ring-blue-100/50"
 											value={formState.description}
 											onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
 												updateFormState("description", e.target.value)
@@ -767,7 +769,7 @@ function DashboardView() {
 										<Input
 											required
 											placeholder="Owner"
-											className="border-slate-200"
+											className="border-border"
 											value={formState.owner}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
 												updateFormState("owner", e.target.value)
@@ -776,7 +778,7 @@ function DashboardView() {
 										<Input
 											required
 											placeholder="团队/渠道"
-											className="border-slate-200"
+											className="border-border"
 											value={formState.team}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
 												updateFormState("team", e.target.value)
@@ -786,13 +788,13 @@ function DashboardView() {
 
 									<div className="grid grid-cols-2 gap-4">
 										<div className="space-y-1">
-											<p className="text-[10px] text-slate-500 uppercase tracking-wider">
+											<p className="text-[10px] text-muted-foreground uppercase tracking-wider">
 												期望图片量
 											</p>
 											<Input
 												type="number"
 												min={0}
-												className="border-slate-200"
+												className="border-border"
 												value={formState.expectedImages}
 												onChange={(e: ChangeEvent<HTMLInputElement>) =>
 													updateFormState(
@@ -803,14 +805,14 @@ function DashboardView() {
 											/>
 										</div>
 										<div className="space-y-1">
-											<p className="text-[10px] text-slate-500 uppercase tracking-wider">
+											<p className="text-[10px] text-muted-foreground uppercase tracking-wider">
 												AI 覆盖目标 %
 											</p>
 											<Input
 												type="number"
 												min={0}
 												max={100}
-												className="border-slate-200"
+												className="border-border"
 												value={formState.aiCoverageTarget}
 												onChange={(e: ChangeEvent<HTMLInputElement>) =>
 													updateFormState(
@@ -828,7 +830,7 @@ function DashboardView() {
 											onChange={(e: ChangeEvent<HTMLSelectElement>) =>
 												updateFormState("priority", e.target.value)
 											}
-											className="border-slate-200"
+											className="border-border"
 										>
 											<option value="low">低优先级</option>
 											<option value="medium">标准</option>
@@ -837,7 +839,7 @@ function DashboardView() {
 										</Select>
 										<Input
 											placeholder="标签提示 (逗号分隔)"
-											className="border-slate-200"
+											className="border-border"
 											value={formState.tagHints}
 											onChange={(e: ChangeEvent<HTMLInputElement>) =>
 												updateFormState("tagHints", e.target.value)
@@ -848,7 +850,7 @@ function DashboardView() {
 									<Button
 										type="submit"
 										disabled={createRequirement.isPending}
-										className="w-full bg-slate-900 text-white hover:bg-slate-800"
+										className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
 									>
 										{createRequirement.isPending ? (
 											<Loader2 className="mr-2 size-4 animate-spin" />
@@ -864,15 +866,15 @@ function DashboardView() {
 				</section>
 
 				<section className="grid gap-8 lg:grid-cols-2">
-					<Card className="border-slate-200 shadow-sm">
-						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+					<Card className="border-border shadow-sm">
+						<CardHeader className="border-border border-b bg-muted/30 px-6 py-4">
 							<div className="flex items-center gap-2">
 								<Database className="size-5 text-indigo-500" />
 								<div>
-									<CardTitle className="text-base text-slate-800">
+									<CardTitle className="text-base text-foreground">
 										创建数据集
 									</CardTitle>
-									<CardDescription className="text-slate-500 text-xs">
+									<CardDescription className="text-muted-foreground text-xs">
 										绑定需求，配置存储与目标
 									</CardDescription>
 								</div>
@@ -887,7 +889,7 @@ function DashboardView() {
 										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
 											updateDatasetForm("requirementId", e.target.value)
 										}
-										className="border-slate-200"
+										className="border-border"
 									>
 										<option value="">选择关联需求...</option>
 										{requirements.map((req) => (
@@ -899,7 +901,7 @@ function DashboardView() {
 									<Input
 										required
 										placeholder="数据集名称"
-										className="border-slate-200"
+										className="border-border"
 										value={datasetForm.name}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateDatasetForm("name", e.target.value)
@@ -909,7 +911,7 @@ function DashboardView() {
 								<Input
 									required
 									placeholder="存储 Bucket (s3://...)"
-									className="border-slate-200 font-mono text-sm"
+									className="border-border font-mono text-sm"
 									value={datasetForm.storageBucket}
 									onChange={(e: ChangeEvent<HTMLInputElement>) =>
 										updateDatasetForm("storageBucket", e.target.value)
@@ -919,7 +921,7 @@ function DashboardView() {
 									<Input
 										type="number"
 										placeholder="总数"
-										className="border-slate-200"
+										className="border-border"
 										value={datasetForm.imageCount}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateDatasetForm("imageCount", e.target.value)
@@ -928,7 +930,7 @@ function DashboardView() {
 									<Input
 										type="number"
 										placeholder="已处理"
-										className="border-slate-200"
+										className="border-border"
 										value={datasetForm.processedCount}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateDatasetForm("processedCount", e.target.value)
@@ -936,7 +938,7 @@ function DashboardView() {
 									/>
 									<Input
 										placeholder="关注标签"
-										className="border-slate-200"
+										className="border-border"
 										value={datasetForm.focusTags}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateDatasetForm("focusTags", e.target.value)
@@ -947,7 +949,7 @@ function DashboardView() {
 									<Input
 										type="number"
 										placeholder="Cap %"
-										className="border-slate-200"
+										className="border-border"
 										value={datasetForm.aiCaptionCoverage}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateDatasetForm("aiCaptionCoverage", e.target.value)
@@ -956,7 +958,7 @@ function DashboardView() {
 									<Input
 										type="number"
 										placeholder="Tag %"
-										className="border-slate-200"
+										className="border-border"
 										value={datasetForm.autoTagCoverage}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateDatasetForm("autoTagCoverage", e.target.value)
@@ -965,7 +967,7 @@ function DashboardView() {
 									<Input
 										type="number"
 										placeholder="Rev %"
-										className="border-slate-200"
+										className="border-border"
 										value={datasetForm.reviewCoverage}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateDatasetForm("reviewCoverage", e.target.value)
@@ -974,7 +976,7 @@ function DashboardView() {
 								</div>
 								<Button
 									type="submit"
-									className="w-full bg-indigo-600 text-white hover:bg-indigo-700"
+									className="w-full bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500"
 									disabled={
 										createDataset.isPending || requirements.length === 0
 									}
@@ -990,15 +992,15 @@ function DashboardView() {
 						</CardContent>
 					</Card>
 
-					<Card className="border-slate-200 shadow-sm">
-						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+					<Card className="border-border shadow-sm">
+						<CardHeader className="border-border border-b bg-muted/30 px-6 py-4">
 							<div className="flex items-center gap-2">
 								<ClipboardList className="size-5 text-emerald-500" />
 								<div>
-									<CardTitle className="text-base text-slate-800">
+									<CardTitle className="text-base text-foreground">
 										调度任务
 									</CardTitle>
-									<CardDescription className="text-slate-500 text-xs">
+									<CardDescription className="text-muted-foreground text-xs">
 										发送请求至后端编排系统
 									</CardDescription>
 								</div>
@@ -1012,7 +1014,7 @@ function DashboardView() {
 									onChange={(e: ChangeEvent<HTMLSelectElement>) =>
 										updateTaskForm("datasetId", e.target.value)
 									}
-									className="border-slate-200"
+									className="border-border"
 								>
 									<option value="">选择数据集...</option>
 									{datasets.map((ds) => (
@@ -1028,7 +1030,7 @@ function DashboardView() {
 										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
 											updateTaskForm("type", e.target.value)
 										}
-										className="border-slate-200"
+										className="border-border"
 									>
 										{taskTypes.map((t) => (
 											<option key={t} value={t}>
@@ -1041,7 +1043,7 @@ function DashboardView() {
 										onChange={(e: ChangeEvent<HTMLSelectElement>) =>
 											updateTaskForm("status", e.target.value)
 										}
-										className="border-slate-200"
+										className="border-border"
 									>
 										{taskStatusValues.map((s) => (
 											<option key={s} value={s}>
@@ -1057,7 +1059,7 @@ function DashboardView() {
 										min={0}
 										max={100}
 										placeholder="进度 %"
-										className="border-slate-200"
+										className="border-border"
 										value={taskForm.progress}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateTaskForm("progress", e.target.value)
@@ -1065,7 +1067,7 @@ function DashboardView() {
 									/>
 									<Input
 										placeholder="负责人"
-										className="w-32 border-slate-200"
+										className="w-32 border-border"
 										value={taskForm.assignedTo}
 										onChange={(e: ChangeEvent<HTMLInputElement>) =>
 											updateTaskForm("assignedTo", e.target.value)
@@ -1075,7 +1077,7 @@ function DashboardView() {
 
 								<Button
 									type="submit"
-									className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
+									className="w-full bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
 									disabled={createTask.isPending || datasets.length === 0}
 								>
 									{createTask.isPending ? (
@@ -1091,16 +1093,16 @@ function DashboardView() {
 				</section>
 
 				<section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-					<Card className="overflow-hidden border-slate-200 shadow-sm">
-						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
-							<CardTitle className="text-base text-slate-800">
+					<Card className="overflow-hidden border-border shadow-sm">
+						<CardHeader className="border-border border-b bg-muted/30 px-6 py-4">
+							<CardTitle className="text-base text-foreground">
 								自动化任务队列
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="p-0">
 							<div className="overflow-x-auto">
 								<table className="w-full text-left text-sm">
-									<thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+									<thead className="bg-muted/50 text-muted-foreground text-xs uppercase">
 										<tr>
 											<th className="px-6 py-3 font-medium">任务类型</th>
 											<th className="px-6 py-3 font-medium">数据集</th>
@@ -1113,12 +1115,12 @@ function DashboardView() {
 											</th>
 										</tr>
 									</thead>
-									<tbody className="divide-y divide-slate-100">
+									<tbody className="divide-y divide-border">
 										{tasks.length === 0 ? (
 											<tr>
 												<td
 													colSpan={5}
-													className="py-8 text-center text-slate-500"
+													className="py-8 text-center text-muted-foreground"
 												>
 													暂无任务
 												</td>
@@ -1127,17 +1129,17 @@ function DashboardView() {
 											tasks.slice(0, 8).map((task) => (
 												<tr
 													key={task.id}
-													className="transition-colors hover:bg-slate-50/60"
+													className="transition-colors hover:bg-muted/40"
 												>
-													<td className="px-6 py-3 font-medium text-slate-800">
+													<td className="px-6 py-3 font-medium text-foreground">
 														{task.type.toUpperCase()}
 													</td>
 													<td className="px-6 py-3">
 														<div className="flex flex-col">
-															<span className="font-medium text-slate-700 text-xs">
+															<span className="font-medium text-foreground text-xs">
 																{task.dataset?.name}
 															</span>
-															<span className="text-[10px] text-slate-400">
+															<span className="text-[10px] text-muted-foreground">
 																{task.requirement?.title ?? "-"}
 															</span>
 														</div>
@@ -1153,7 +1155,7 @@ function DashboardView() {
 																})
 															}
 															disabled={updateTaskStatus.isPending}
-															className="h-8 border-slate-200 text-xs"
+															className="h-8 border-border text-xs"
 														>
 															{taskStatusValues.map((s) => (
 																<option key={s} value={s}>
@@ -1166,21 +1168,21 @@ function DashboardView() {
 														<div className="flex items-center gap-2">
 															<Progress
 																value={task.progress}
-																className="h-1.5 flex-1 bg-slate-100"
+																className="h-1.5 flex-1 bg-muted"
 																indicatorClassName={
 																	task.status === "failed"
 																		? "bg-red-500"
 																		: task.status === "succeeded"
 																			? "bg-emerald-500"
-																			: "bg-blue-500"
+																			: "bg-blue-50"
 																}
 															/>
-															<span className="w-8 text-right font-mono text-slate-500 text-xs">
+															<span className="w-8 text-right font-mono text-muted-foreground text-xs">
 																{task.progress}%
 															</span>
 														</div>
 													</td>
-													<td className="px-6 py-3 text-right text-slate-600 text-xs">
+													<td className="px-6 py-3 text-right text-muted-foreground text-xs">
 														{task.assignedTo ?? "System"}
 													</td>
 												</tr>
@@ -1192,40 +1194,42 @@ function DashboardView() {
 						</CardContent>
 					</Card>
 
-					<Card className="border-slate-200 shadow-sm">
-						<CardHeader className="border-slate-100 border-b bg-slate-50/50 px-6 py-4">
+					<Card className="border-border shadow-sm">
+						<CardHeader className="border-border border-b bg-muted/30 px-6 py-4">
 							<div className="flex items-center justify-between">
-								<CardTitle className="text-base text-slate-800">
+								<CardTitle className="text-base text-foreground">
 									标签洞察
 								</CardTitle>
-								<Tag className="size-4 text-slate-400" />
+								<Tag className="size-4 text-muted-foreground" />
 							</div>
 						</CardHeader>
-						<CardContent className="space-y-3 p-6">
+						<CardContent className="divide-y divide-border/40 p-6 pt-2">
 							{tags.length === 0 ? (
-								<p className="text-center text-slate-500 text-sm">暂无数据</p>
+								<p className="py-4 text-center text-muted-foreground text-sm">
+									暂无数据
+								</p>
 							) : (
 								tags.slice(0, 6).map((tag) => (
 									<div
 										key={tag.id}
-										className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 p-3 transition-colors hover:border-slate-200 hover:bg-white"
+										className="flex items-center justify-between px-2 py-3 transition-colors hover:bg-muted/20"
 									>
 										<div>
-											<p className="font-medium text-slate-700 text-sm">
+											<p className="font-medium text-foreground text-sm">
 												#{tag.label}
 											</p>
-											<p className="line-clamp-1 max-w-[120px] text-slate-400 text-xs">
+											<p className="line-clamp-1 max-w-[120px] text-muted-foreground text-xs">
 												{tag.dataset?.name}
 											</p>
 										</div>
 										<div className="text-right">
 											<Badge
 												variant="secondary"
-												className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+												className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
 											>
 												{tag.coverage}%
 											</Badge>
-											<p className="mt-1 text-[10px] text-slate-400">
+											<p className="mt-1 text-[10px] text-muted-foreground">
 												{tag.usageCount} 次
 											</p>
 										</div>
@@ -1238,28 +1242,28 @@ function DashboardView() {
 
 				<section>
 					<div className="mb-4 flex items-center gap-2">
-						<Users2 className="size-5 text-slate-400" />
-						<h2 className="font-semibold text-lg text-slate-800">团队概览</h2>
+						<Users2 className="size-5 text-muted-foreground" />
+						<h2 className="font-semibold text-foreground text-lg">团队概览</h2>
 					</div>
 					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 						{ownerSummary.length === 0 ? (
-							<div className="col-span-full rounded-lg border border-slate-200 border-dashed p-8 text-center text-slate-500">
+							<div className="col-span-full rounded-lg border border-border border-dashed p-8 text-center text-muted-foreground">
 								暂无成员数据
 							</div>
 						) : (
 							ownerSummary.map((owner) => (
 								<div
 									key={owner.owner}
-									className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
+									className="flex items-center justify-between rounded-xl bg-muted/30 p-4 transition-all hover:bg-muted/50"
 								>
 									<div>
-										<p className="text-slate-500 text-xs">负责人</p>
-										<p className="font-semibold text-lg text-slate-900">
+										<p className="text-muted-foreground text-xs">负责人</p>
+										<p className="font-semibold text-foreground text-lg">
 											{owner.owner}
 										</p>
 									</div>
 									<div className="flex flex-col items-end">
-										<Badge className="bg-slate-900 text-white hover:bg-slate-800">
+										<Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
 											{owner.count} 需求
 										</Badge>
 									</div>
@@ -1289,22 +1293,25 @@ function SummaryCard({
 	color,
 }: SummaryCardProps) {
 	const colorStyles = {
-		blue: "bg-blue-50 text-blue-600 border-blue-100",
-		orange: "bg-orange-50 text-orange-600 border-orange-100",
-		emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
-		indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
-		red: "bg-red-50 text-red-600 border-red-100",
+		blue: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400",
+		orange:
+			"bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400",
+		emerald:
+			"bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400",
+		indigo:
+			"bg-indigo-500/10 text-indigo-600 border-indigo-500/20 dark:text-indigo-400",
+		red: "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
 	};
 
 	return (
-		<Card className="group relative overflow-hidden border-slate-200 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+		<Card className="group relative overflow-hidden border-border shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
 			<CardContent className="p-5">
 				<div className="flex items-start justify-between">
 					<div className="space-y-1">
-						<p className="font-medium text-slate-500 text-xs uppercase tracking-wider">
+						<p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
 							{label}
 						</p>
-						<p className="font-bold text-2xl text-slate-900 tracking-tight">
+						<p className="font-bold text-2xl text-foreground tracking-tight">
 							{value}
 						</p>
 					</div>
@@ -1314,7 +1321,7 @@ function SummaryCard({
 						{icon}
 					</div>
 				</div>
-				<div className="mt-4 flex items-center text-slate-400 text-xs">
+				<div className="mt-4 flex items-center text-muted-foreground text-xs">
 					{description}
 				</div>
 			</CardContent>
