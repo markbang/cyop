@@ -19,7 +19,7 @@ app.use("*", async (c, next) => {
 	logger.debug("request", {
 		method: c.req.method,
 		path: c.req.path,
-		status: c.res.status,
+		status: (c.res as unknown as { status: number }).status,
 		ms: Date.now() - start,
 	});
 });
